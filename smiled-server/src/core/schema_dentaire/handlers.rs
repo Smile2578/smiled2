@@ -39,6 +39,16 @@ pub async fn create_schema_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<CreateSchemaInput>,
 ) -> Result<impl IntoResponse, SchemaApiError> {
+    if !auth_user.can_write_clinical() {
+        return Err(SchemaApiError::Forbidden);
+    }
+
+    if !["permanente", "lacteale", "mixte"].contains(&body.dentition.as_str()) {
+        return Err(SchemaApiError::Validation(
+            format!("Dentition invalide: '{}'. Valeurs acceptées: permanente, lacteale, mixte", body.dentition),
+        ));
+    }
+
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| SchemaApiError::Database(e.to_string()))?;
@@ -52,7 +62,14 @@ pub async fn create_schema_handler(
 
     let schema = insert_schema(&mut tx, patient_id, auth_user.cabinet_id, auth_user.user_id, &body.dentition)
         .await
-        .map_err(|e| SchemaApiError::Database(e.to_string()))?;
+        .map_err(|e| {
+            let msg = e.to_string();
+            if msg.contains("23505") || msg.contains("unique") {
+                SchemaApiError::Conflict("Une version de schéma est déjà en cours de création".to_string())
+            } else {
+                SchemaApiError::Database(msg)
+            }
+        })?;
 
     init_schema_teeth(&mut tx, schema.id, &schema.dentition)
         .await
@@ -181,6 +198,9 @@ pub async fn update_tooth_handler(
     Path((patient_id, fdi)): Path<(Uuid, i16)>,
     Json(body): Json<UpdateToothInput>,
 ) -> Result<impl IntoResponse, SchemaApiError> {
+    if !auth_user.can_write_clinical() {
+        return Err(SchemaApiError::Forbidden);
+    }
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| SchemaApiError::Database(e.to_string()))?;
@@ -244,6 +264,9 @@ pub async fn update_paro_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<UpdateParoInput>,
 ) -> Result<impl IntoResponse, SchemaApiError> {
+    if !auth_user.can_write_clinical() {
+        return Err(SchemaApiError::Forbidden);
+    }
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| SchemaApiError::Database(e.to_string()))?;
@@ -301,6 +324,9 @@ pub async fn update_occlusion_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<UpdateOcclusionInput>,
 ) -> Result<impl IntoResponse, SchemaApiError> {
+    if !auth_user.can_write_clinical() {
+        return Err(SchemaApiError::Forbidden);
+    }
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| SchemaApiError::Database(e.to_string()))?;
@@ -359,6 +385,9 @@ pub async fn update_atm_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<UpdateAtmInput>,
 ) -> Result<impl IntoResponse, SchemaApiError> {
+    if !auth_user.can_write_clinical() {
+        return Err(SchemaApiError::Forbidden);
+    }
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| SchemaApiError::Database(e.to_string()))?;
@@ -417,6 +446,9 @@ pub async fn update_paro_global_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<UpdateParoGlobalInput>,
 ) -> Result<impl IntoResponse, SchemaApiError> {
+    if !auth_user.can_write_clinical() {
+        return Err(SchemaApiError::Forbidden);
+    }
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| SchemaApiError::Database(e.to_string()))?;
@@ -507,6 +539,9 @@ async fn load_full_schema(
 #[derive(Debug)]
 pub enum SchemaApiError {
     NotFound(String),
+    Forbidden,
+    Validation(String),
+    Conflict(String),
     Database(String),
 }
 
@@ -514,6 +549,9 @@ impl IntoResponse for SchemaApiError {
     fn into_response(self) -> Response {
         let (status, message) = match self {
             SchemaApiError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
+            SchemaApiError::Forbidden => (StatusCode::FORBIDDEN, "Action non autorisée".to_string()),
+            SchemaApiError::Validation(msg) => (StatusCode::UNPROCESSABLE_ENTITY, msg),
+            SchemaApiError::Conflict(msg) => (StatusCode::CONFLICT, msg),
             SchemaApiError::Database(e) => {
                 tracing::error!("Database error in schema handler: {e}");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Erreur serveur".to_string())

@@ -21,10 +21,21 @@ pub struct AuthUser {
 /// Roles allowed to manage reference data (actes, matériaux, teintes, etc.)
 const SETTINGS_ROLES: &[&str] = &["titulaire", "associe", "admin"];
 
+/// Roles allowed to write clinical data (schema, diagnostic, PDT, etc.)
+const CLINICAL_WRITE_ROLES: &[&str] = &[
+    "titulaire", "associe", "collaborateur", "remplacant",
+    "specialiste_odf", "specialiste_co", "specialiste_mbd",
+];
+
 impl AuthUser {
     /// Check if the user has a role that can manage cabinet settings and reference data.
     pub fn can_manage_settings(&self) -> bool {
         SETTINGS_ROLES.contains(&self.role.as_str())
+    }
+
+    /// Check if the user has a role that can write clinical data.
+    pub fn can_write_clinical(&self) -> bool {
+        CLINICAL_WRITE_ROLES.contains(&self.role.as_str())
     }
 }
 
