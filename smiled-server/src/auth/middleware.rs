@@ -18,6 +18,16 @@ pub struct AuthUser {
     pub role: String,
 }
 
+/// Roles allowed to manage reference data (actes, matériaux, teintes, etc.)
+const SETTINGS_ROLES: &[&str] = &["titulaire", "associe", "admin"];
+
+impl AuthUser {
+    /// Check if the user has a role that can manage cabinet settings and reference data.
+    pub fn can_manage_settings(&self) -> bool {
+        SETTINGS_ROLES.contains(&self.role.as_str())
+    }
+}
+
 #[async_trait]
 impl FromRequestParts<AppState> for AuthUser {
     type Rejection = AuthRejection;

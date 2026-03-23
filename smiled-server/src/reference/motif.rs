@@ -88,6 +88,9 @@ pub async fn create_motif_handler(
     auth_user: AuthUser,
     Json(body): Json<CreateMotif>,
 ) -> Result<impl IntoResponse, MotifApiError> {
+    if !auth_user.can_manage_settings() {
+        return Err(MotifApiError::Forbidden);
+    }
     body.validate()
         .map_err(|e| MotifApiError::Validation(e.to_string()))?;
 
@@ -102,6 +105,7 @@ pub async fn create_motif_handler(
 
 #[derive(Debug)]
 pub enum MotifApiError {
+    Forbidden,
     Validation(String),
     Database(String),
 }
@@ -109,6 +113,7 @@ pub enum MotifApiError {
 impl IntoResponse for MotifApiError {
     fn into_response(self) -> Response {
         let (status, message) = match self {
+            MotifApiError::Forbidden => (StatusCode::FORBIDDEN, "Action non autorisée".to_string()),
             MotifApiError::Validation(msg) => (StatusCode::UNPROCESSABLE_ENTITY, msg),
             MotifApiError::Database(e) => {
                 tracing::error!("Database error in motif handler: {e}");

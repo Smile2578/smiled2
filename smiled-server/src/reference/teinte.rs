@@ -137,6 +137,9 @@ pub async fn create_teinte_handler(
     auth_user: AuthUser,
     Json(body): Json<CreateTeinte>,
 ) -> Result<impl IntoResponse, TeinteApiError> {
+    if !auth_user.can_manage_settings() {
+        return Err(TeinteApiError::Forbidden);
+    }
     body.validate()
         .map_err(|e| TeinteApiError::Validation(e.to_string()))?;
 
@@ -153,6 +156,9 @@ pub async fn update_teinte_handler(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateTeinte>,
 ) -> Result<impl IntoResponse, TeinteApiError> {
+    if !auth_user.can_manage_settings() {
+        return Err(TeinteApiError::Forbidden);
+    }
     body.validate()
         .map_err(|e| TeinteApiError::Validation(e.to_string()))?;
 
@@ -169,6 +175,7 @@ pub async fn update_teinte_handler(
 #[derive(Debug)]
 pub enum TeinteApiError {
     NotFound,
+    Forbidden,
     Validation(String),
     Database(String),
 }
@@ -177,6 +184,7 @@ impl IntoResponse for TeinteApiError {
     fn into_response(self) -> Response {
         let (status, message) = match self {
             TeinteApiError::NotFound => (StatusCode::NOT_FOUND, "Teinte introuvable".to_string()),
+            TeinteApiError::Forbidden => (StatusCode::FORBIDDEN, "Action non autorisée".to_string()),
             TeinteApiError::Validation(msg) => (StatusCode::UNPROCESSABLE_ENTITY, msg),
             TeinteApiError::Database(e) => {
                 tracing::error!("Database error in teinte handler: {e}");

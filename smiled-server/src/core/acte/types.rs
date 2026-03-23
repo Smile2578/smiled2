@@ -46,9 +46,12 @@ pub struct CreateActe {
     pub code_ngap: Option<String>,
     #[validate(length(min = 1, max = 500, message = "Le libellé est requis"))]
     pub libelle: String,
+    #[validate(range(min = 0.0, message = "Le montant doit être positif ou nul"))]
     pub base_secu: Option<f64>,
+    #[validate(range(min = 0.0, message = "Le prix doit être positif ou nul"))]
     pub prix_defaut: f64,
     pub panier_rac: Option<String>,
+    #[validate(range(min = 0.0, message = "Le plafond doit être positif ou nul"))]
     pub plafond_rac_0: Option<f64>,
     pub modificateur_jeune: Option<bool>,
     pub dent_requise: Option<bool>,
@@ -81,8 +84,9 @@ pub struct UpdateActe {
 }
 
 /// Input for overriding the tarif of any acte for a specific cabinet.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct TarifOverride {
+    #[validate(range(min = 0.0, message = "Le prix doit être positif ou nul"))]
     pub prix: f64,
 }
 

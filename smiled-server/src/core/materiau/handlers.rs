@@ -52,6 +52,9 @@ pub async fn create_materiau_handler(
     auth_user: AuthUser,
     Json(body): Json<CreateMateriau>,
 ) -> Result<impl IntoResponse, MateriauApiError> {
+    if !auth_user.can_manage_settings() {
+        return Err(MateriauApiError::Forbidden);
+    }
     body.validate()
         .map_err(|e| MateriauApiError::Validation(e.to_string()))?;
 
@@ -71,6 +74,9 @@ pub async fn update_materiau_handler(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateMateriau>,
 ) -> Result<impl IntoResponse, MateriauApiError> {
+    if !auth_user.can_manage_settings() {
+        return Err(MateriauApiError::Forbidden);
+    }
     body.validate()
         .map_err(|e| MateriauApiError::Validation(e.to_string()))?;
 
@@ -87,6 +93,7 @@ pub async fn update_materiau_handler(
 #[derive(Debug)]
 pub enum MateriauApiError {
     NotFound,
+    Forbidden,
     Validation(String),
     Database(String),
 }
@@ -96,6 +103,9 @@ impl IntoResponse for MateriauApiError {
         let (status, message) = match self {
             MateriauApiError::NotFound => {
                 (StatusCode::NOT_FOUND, "Matériau introuvable".to_string())
+            }
+            MateriauApiError::Forbidden => {
+                (StatusCode::FORBIDDEN, "Action non autorisée".to_string())
             }
             MateriauApiError::Validation(msg) => (StatusCode::UNPROCESSABLE_ENTITY, msg),
             MateriauApiError::Database(e) => {

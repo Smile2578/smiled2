@@ -38,6 +38,9 @@ pub async fn create_acte_handler(
     auth_user: AuthUser,
     Json(body): Json<CreateActe>,
 ) -> Result<impl IntoResponse, ActeApiError> {
+    if !auth_user.can_manage_settings() {
+        return Err(ActeApiError::Forbidden);
+    }
     body.validate()
         .map_err(|e| ActeApiError::Validation(e.to_string()))?;
 
@@ -57,6 +60,9 @@ pub async fn update_acte_handler(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateActe>,
 ) -> Result<impl IntoResponse, ActeApiError> {
+    if !auth_user.can_manage_settings() {
+        return Err(ActeApiError::Forbidden);
+    }
     body.validate()
         .map_err(|e| ActeApiError::Validation(e.to_string()))?;
 
@@ -76,6 +82,9 @@ pub async fn toggle_acte_handler(
     auth_user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ActeApiError> {
+    if !auth_user.can_manage_settings() {
+        return Err(ActeApiError::Forbidden);
+    }
     let acte = toggle_acte(&state.pool, id, auth_user.cabinet_id)
         .await
         .map_err(|e| ActeApiError::Database(e.to_string()))?
@@ -93,6 +102,11 @@ pub async fn override_tarif_handler(
     Path(id): Path<Uuid>,
     Json(body): Json<TarifOverride>,
 ) -> Result<impl IntoResponse, ActeApiError> {
+    if !auth_user.can_manage_settings() {
+        return Err(ActeApiError::Forbidden);
+    }
+    body.validate()
+        .map_err(|e| ActeApiError::Validation(e.to_string()))?;
     let exists = acte_exists(&state.pool, id, auth_user.cabinet_id)
         .await
         .map_err(|e| ActeApiError::Database(e.to_string()))?;
@@ -115,6 +129,7 @@ pub async fn override_tarif_handler(
 #[derive(Debug)]
 pub enum ActeApiError {
     NotFound,
+    Forbidden,
     Validation(String),
     Database(String),
 }
@@ -123,6 +138,7 @@ impl IntoResponse for ActeApiError {
     fn into_response(self) -> Response {
         let (status, message) = match self {
             ActeApiError::NotFound => (StatusCode::NOT_FOUND, "Acte introuvable".to_string()),
+            ActeApiError::Forbidden => (StatusCode::FORBIDDEN, "Action non autorisée".to_string()),
             ActeApiError::Validation(msg) => (StatusCode::UNPROCESSABLE_ENTITY, msg),
             ActeApiError::Database(e) => {
                 tracing::error!("Database error in acte handler: {e}");
