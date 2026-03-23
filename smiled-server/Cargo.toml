@@ -15,7 +15,7 @@ path = "src/lib.rs"
 
 [dependencies]
 # HTTP framework
-axum = { version = "0.7", features = ["macros"] }
+axum = { version = "0.7", features = ["macros", "multipart"] }
 
 # Async runtime
 tokio = { version = "1", features = ["full"] }

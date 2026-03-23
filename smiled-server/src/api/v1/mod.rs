@@ -3,7 +3,7 @@ pub mod auth;
 use axum::Router;
 
 use crate::{
-    core::{acte, diagnostic, materiau, patient, pdt, schema_dentaire},
+    core::{acte, diagnostic, document, materiau, patient, pdt, schema_dentaire},
     reference,
     state::AppState,
 };
@@ -19,6 +19,7 @@ pub fn router() -> Router<AppState> {
             .merge(reference::router())
             .merge(schema_dentaire::router())
             .merge(diagnostic::router())
-            .merge(pdt::router()),
+            .merge(pdt::router())
+            .merge(document::router()),
     )
 }

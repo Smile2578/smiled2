@@ -18,6 +18,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 use smiled_server::{
     api,
     config::Config,
+    core::document::storage::S3Storage,
     db::pool::create_pool,
     state::AppState,
 };
@@ -42,7 +43,19 @@ async fn main() {
             std::process::exit(1);
         });
 
-    let state = AppState::new(pool, cfg.clone());
+    let s3 = S3Storage::new(
+        &cfg.s3_endpoint,
+        &cfg.s3_bucket,
+        &cfg.s3_access_key,
+        &cfg.s3_secret_key,
+    )
+    .await;
+
+    if let Err(e) = s3.ensure_bucket().await {
+        tracing::warn!("S3 bucket setup failed (continuing without S3): {e}");
+    }
+
+    let state = AppState::with_s3(pool, cfg.clone(), s3);
     let cors = build_cors(&cfg);
     let app = build_router(state, cors);
 

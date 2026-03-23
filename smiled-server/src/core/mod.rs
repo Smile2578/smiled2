@@ -1,5 +1,6 @@
 pub mod acte;
 pub mod diagnostic;
+pub mod document;
 pub mod historique;
 pub mod materiau;
 pub mod patient;
