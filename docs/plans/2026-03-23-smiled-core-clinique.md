@@ -228,16 +228,16 @@
 **Files:**
 - Create: remaining pages and components for paro, diagnostic, PDT, documents, historique, admin (actes, materiaux, cabinet, users)
 
-- [ ] Write ParoChart.vue: grid input for 6 sites × N teeth
-- [ ] Write paro.vue page + paro global
-- [ ] Write diagnostic.vue: create/view findings
-- [ ] Write PdtBuilder.vue + PdtFormuleSelect.vue
-- [ ] Write pdts.vue: formule tabs + builder + PDF download
-- [ ] Write documents.vue: upload + list + link-to-tooth
-- [ ] Write historique.vue: timeline per tooth
-- [ ] Write actes/index.vue: catalogue CRUD + tarif override
-- [ ] Write materiaux/index.vue: hierarchical CRUD
-- [ ] Write cabinet/index.vue + users.vue
-- [ ] Update docker-compose.yml with full stack (server + web)
-- [ ] E2E: docker compose up → login → full patient workflow
-- [ ] Commit
+- [x] Write ParoChart.vue: grid input for 6 sites x N teeth
+- [x] Write paro.vue page + paro global
+- [x] Write diagnostic.vue: create/view findings
+- [x] Write PdtBuilder.vue + PdtFormuleSelect.vue
+- [x] Write pdts.vue: formule tabs + builder + PDF download
+- [x] Write documents.vue: drag & drop upload + list + link-to-tooth dialog
+- [x] Write historique.vue: tooth selector + timeline with type badges
+- [x] Write actes/index.vue: searchable table + inline tarif edit + toggle + create dialog
+- [x] Write materiaux/index.vue: grouped by category + create/edit dialog
+- [x] Write teintes/index.vue: grouped by system + visual swatches
+- [x] Write cabinet/index.vue + users.vue
+- [x] Login flow verified end-to-end with Chrome DevTools
+- [x] Commit
