@@ -40,7 +40,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(email: string, password: string): Promise<void> {
-    const response = await $fetch<ApiResponse<LoginResponse>>(
+    const response = await $fetch<LoginResponse>(
       `${config.public.apiBase}/api/v1/auth/login`,
       {
         method: 'POST',
@@ -49,13 +49,10 @@ export const useAuthStore = defineStore('auth', () => {
       },
     )
 
-    if (!response.success || !response.data) {
-      throw new Error(response.error ?? 'Identifiants invalides')
-    }
-
-    const { access_token, refresh_token, user: loggedUser } = response.data
+    const { access_token, refresh_token, user: loggedUser } = response
     persistTokens(access_token, refresh_token)
     user.value = loggedUser
+    await router.push('/')
   }
 
   async function logout(): Promise<void> {
@@ -84,7 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     try {
-      const response = await $fetch<ApiResponse<LoginResponse>>(
+      const response = await $fetch<{ access_token: string; refresh_token: string }>(
         `${config.public.apiBase}/api/v1/auth/refresh`,
         {
           method: 'POST',
@@ -93,14 +90,7 @@ export const useAuthStore = defineStore('auth', () => {
         },
       )
 
-      if (!response.success || !response.data) {
-        clearTokens()
-        throw new Error(response.error ?? 'Impossible de renouveler la session')
-      }
-
-      const { access_token, refresh_token, user: refreshedUser } = response.data
-      persistTokens(access_token, refresh_token)
-      user.value = refreshedUser
+      persistTokens(response.access_token, response.refresh_token)
     } catch (error) {
       clearTokens()
       throw error
