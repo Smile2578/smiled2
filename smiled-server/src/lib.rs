@@ -4,5 +4,6 @@ pub mod auth;
 pub mod config;
 pub mod core;
 pub mod db;
+pub mod reference;
 pub mod state;
 pub mod tenant;
