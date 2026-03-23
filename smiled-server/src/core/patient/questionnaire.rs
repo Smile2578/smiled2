@@ -49,18 +49,8 @@ pub async fn upsert_questionnaire(
     cabinet_id: Uuid,
     input: &QuestionnaireInput,
 ) -> Result<Questionnaire, sqlx::Error> {
-    // Determine next version number
-    let next_version: i32 = sqlx::query_scalar!(
-        r#"
-        SELECT COALESCE(MAX(version), 0) + 1 as "v!"
-        FROM questionnaire_medical
-        WHERE patient_id = $1
-        "#,
-        patient_id,
-    )
-    .fetch_one(&mut **tx)
-    .await?;
-
+    // Atomic version increment: subquery computes next version within the INSERT
+    // statement itself, eliminating the TOCTOU race of SELECT MAX + INSERT
     let row = sqlx::query_as!(
         Questionnaire,
         r#"
@@ -79,18 +69,19 @@ pub async fn upsert_questionnaire(
             notice_information_date
         )
         VALUES (
-            $1, $2, $3,
-            $4, $5, $6, $7,
-            $8, $9, $10, $11,
-            $12, $13, $14,
-            $15, $16, $17,
-            $18, $19, $20,
-            $21, $22, $23,
-            $24, $25, $26,
-            $27, $28, $29, $30,
-            $31, $32,
-            $33, $34, $35,
-            $36
+            $1, $2,
+            COALESCE((SELECT MAX(version) FROM questionnaire_medical WHERE patient_id = $1), 0) + 1,
+            $3, $4, $5, $6,
+            $7, $8, $9, $10,
+            $11, $12, $13,
+            $14, $15, $16,
+            $17, $18, $19,
+            $20, $21, $22,
+            $23, $24, $25,
+            $26, $27, $28, $29,
+            $30, $31,
+            $32, $33, $34,
+            $35
         )
         RETURNING
             id, patient_id, cabinet_id, version,
@@ -109,7 +100,6 @@ pub async fn upsert_questionnaire(
         "#,
         patient_id,
         cabinet_id,
-        next_version,
         input.date_signature,
         input.signe_par,
         input.nom_signataire,
