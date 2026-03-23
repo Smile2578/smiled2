@@ -138,13 +138,13 @@
 - Create: `smiled-server/src/core/pdt/mod.rs`, `handlers.rs`, `queries.rs`, `types.rs`
 - Test: `smiled-server/tests/pdt_test.rs`
 
-- [ ] Write diagnostic CRUD with findings
-- [ ] Write PDT CRUD with ligne_pdt (acte, dent, materiau, prix)
-- [ ] Write 4-formule logic sharing same diagnostic
-- [ ] Write PDF generation stub
-- [ ] Write tests: diagnostic → 4 PDTs → prix_total, ligne statut
-- [ ] Run tests → PASS
-- [ ] Commit
+- [x] Write diagnostic CRUD with findings (3 endpoints, RBAC)
+- [x] Write PDT CRUD with ligne_pdt (acte, dent, materiau, prix) + prix_total auto-calc
+- [x] Write 4-formule logic sharing same diagnostic (unique constraint enforced)
+- [x] Write PDF generation stub (returns placeholder URL)
+- [x] Write tests: 12 integration tests (diagnostic, 4-formule, prix_total, ligne statut, PDF, auth)
+- [x] Run tests → 68 PASS
+- [x] Commit
 
 ---
 
