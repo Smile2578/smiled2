@@ -1,0 +1,80 @@
+[package]
+name = "smiled-server"
+version = "0.1.0"
+edition = "2021"
+authors = ["Smiled.IO Team"]
+description = "Smiled.IO dental software backend — Axum + PostgreSQL + S3"
+
+[[bin]]
+name = "smiled-server"
+path = "src/main.rs"
+
+[dependencies]
+# HTTP framework
+axum = { version = "0.7", features = ["macros"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Middleware
+tower = { version = "0.4" }
+tower-http = { version = "0.5", features = ["cors", "trace", "timeout", "compression-gzip"] }
+
+# Database
+sqlx = { version = "0.8", features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+    "uuid",
+    "chrono",
+    "json",
+    "macros",
+] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Authentication
+jsonwebtoken = "9"
+argon2 = "0.5"
+
+# Validation
+validator = { version = "0.18", features = ["derive"] }
+
+# Identifiers
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# Date/time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Caching
+moka = { version = "0.12", features = ["future"] }
+
+# Email (default-features disabled to avoid native-tls conflict; rustls used)
+lettre = { version = "0.11", default-features = false, features = ["tokio1-rustls-tls", "smtp-transport", "builder", "hostname", "tracing"] }
+
+# S3/MinIO
+aws-sdk-s3 = "1"
+aws-config = "1"
+aws-credential-types = "1"
+
+# Logging / tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Environment
+dotenvy = "0.15"
+
+# Errors
+thiserror = "1"
+anyhow = "1"
+
+[dev-dependencies]
+axum-test = "15"
+tokio = { version = "1", features = ["full"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

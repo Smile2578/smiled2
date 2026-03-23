@@ -1,0 +1,23 @@
+# ─── Rust ─────────────────────────────────────────────────────────────────────
+smiled-server/target/
+
+# ─── Node / Nuxt ──────────────────────────────────────────────────────────────
+smiled-web/node_modules/
+smiled-web/.nuxt/
+smiled-web/.output/
+smiled-web/dist/
+
+# ─── Environment files (NEVER commit) ─────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+smiled-server/.env
+smiled-web/.env
+
+# ─── OS / editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
