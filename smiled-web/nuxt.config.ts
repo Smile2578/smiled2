@@ -16,6 +16,12 @@ export default defineNuxtConfig({
     'shadcn-nuxt',
   ],
 
+  // shadcn-vue configuration
+  shadcn: {
+    prefix: '',
+    componentDir: './app/components/ui',
+  },
+
   // Tailwind CSS configuration
   tailwindcss: {
     cssPath: '~/assets/css/tailwind.css',
