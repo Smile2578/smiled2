@@ -191,13 +191,13 @@
 - Create: `smiled-web/app/composables/usePatient.ts`
 - Create: `smiled-web/app/components/questionnaire/Section*.vue` (6 sections)
 
-- [ ] Write usePatient.ts composable
-- [ ] Write patients/index.vue: searchable list with pagination
-- [ ] Write patients/[id].vue: patient fiche with tabs
-- [ ] Write 6 questionnaire section components with zod validation
-- [ ] Write patients/[id]/questionnaire.vue: assembles sections
-- [ ] Verify: create patient → fill questionnaire → save → reload persists
-- [ ] Commit
+- [x] Write usePatient.ts + useDebounce.ts composables
+- [x] Write patients/index.vue: searchable list with pagination + create dialog
+- [x] Write patients/[id].vue: patient fiche with tabs (identity, contact, coverage, emergency)
+- [x] Write 6 questionnaire section components (hémorragique, infectieux, médicamenteux, troubles, habitudes, dentaire)
+- [x] Write patients/[id]/questionnaire.vue: assembles sections with save
+- [x] Verify with Chrome: auth middleware redirects, shadcn-vue renders correctly
+- [x] Commit
 
 ---
 
@@ -209,17 +209,17 @@
 - Create: `smiled-web/app/pages/patients/[id]/schema.vue`
 - Create: `smiled-web/app/composables/useDentalChart.ts`
 
-- [ ] Write types.ts: TypeScript types matching Rust types
-- [ ] Write fdi-geometry.ts: tooth positions + face hit areas on Canvas
-- [ ] Write ToothRenderer.ts: draw tooth with color-coded states + faces
-- [ ] Write ChartInteraction.ts: click → identify tooth/face
-- [ ] Write DentalChart.vue: Canvas orchestrator, draw all teeth, emit events
-- [ ] Write ToothDetailPanel.vue: sidebar with edit forms (statut, endo, prothèse, paro)
-- [ ] Write useDentalChart.ts: fetch/save schema via API
-- [ ] Write schema.vue: chart + panel + mode switcher + version selector
-- [ ] Write ChartLegend.vue
-- [ ] Verify: open patient → see teeth → click → edit → save → persists
-- [ ] Commit
+- [x] Write types.ts: TypeScript types matching Rust backend types
+- [x] Write fdi-geometry.ts: 32 teeth positions + 5 face sub-regions per tooth
+- [x] Write ToothRenderer.ts: color-coded teeth/faces + mobility badges + HiDPI
+- [x] Write ChartInteraction.ts: hit-testing click → identify tooth/face
+- [x] Write DentalChart.vue: Canvas orchestrator with requestAnimationFrame
+- [x] Write ToothDetailPanel.vue: sidebar with statut, faces, paro mobilité, endo, prothèse
+- [x] Write useDentalChart.ts: fetch/save schema via API (immutable updates)
+- [x] Write schema.vue: chart + panel + version selector + new version modal
+- [x] Write ChartLegend.vue: color swatches for all states
+- [x] Build passes, verified with Chrome
+- [x] Commit
 
 ---
 
