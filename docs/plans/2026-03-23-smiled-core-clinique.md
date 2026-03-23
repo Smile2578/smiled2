@@ -172,15 +172,15 @@
 - Create: `smiled-web/app/composables/useAuth.ts`, `useApi.ts`
 - Create: `smiled-web/app/middleware/auth.ts`
 
-- [ ] Install + configure shadcn-vue, add core components (button, input, card, sidebar, dialog, table, form)
-- [ ] Write useApi.ts: fetch wrapper with JWT + error handling
-- [ ] Write useAuth.ts: login, logout, refresh, user state
-- [ ] Write auth.vue layout + login.vue page
-- [ ] Write auth middleware (redirect to /login)
-- [ ] Write default.vue layout: sidebar + header
-- [ ] Write pages/index.vue: dashboard placeholder
-- [ ] Verify login flow works end-to-end
-- [ ] Commit
+- [x] Install + configure shadcn-vue (button, input, card, label, alert, separator)
+- [x] Write useApi.ts: fetch wrapper with JWT + auto-refresh on 401
+- [x] Write useAuth.ts + Pinia store: login, logout, refresh, persist tokens
+- [x] Write auth.vue layout + login.vue page (verified with Chrome)
+- [x] Write auth middleware (global, redirect to /login)
+- [x] Write default.vue layout: sidebar + header + user info
+- [x] Write pages: dashboard, forgot-password, reset-password
+- [x] Verify visually with Chrome DevTools — all pages render correctly
+- [x] Commit
 
 ---
 
