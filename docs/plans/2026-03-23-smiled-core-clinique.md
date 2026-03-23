@@ -40,19 +40,19 @@
 - Create: `smiled-server/migrations/001_init.sql` through `010_seed_permissions.sql`
 - Create: `smiled-server/src/db/mod.rs`, `smiled-server/src/db/pool.rs`
 
-- [ ] Write migration `001_init.sql`: `set_updated_at()` trigger, `audit_log`, `cabinet`, `utilisateur`, `permission`, `role_permission`, `user_permission_override` tables
-- [ ] Write migration `002_patient.sql`: `patient`, `questionnaire_medical` tables
-- [ ] Write migration `003_schema_dentaire.sql`: `schema_dentaire`, `dent`, `face_dent`, `paro_site`, `occlusion`, `atm`, `paro_global`, `prothese_amovible`, `evenement_dent` tables
-- [ ] Write migration `004_diagnostic_pdt.sql`: `diagnostic`, `finding`, `plan_traitement`, `ligne_pdt` tables
-- [ ] Write migration `005_reference_data.sql`: `categorie_acte`, `acte`, `acte_materiau`, `tarif_cabinet`, `categorie_materiau`, `materiau`, `teinte`, `motif_consultation`, `trouble_medical`, `document`, `document_dent` tables
-- [ ] Write migration `006_rls.sql`: Enable RLS + policies on all tenant-scoped tables
-- [ ] Write migration `007_seed_actes.sql`: ~150 actes (14 categories, CCAM/NGAP/HN)
-- [ ] Write migration `008_seed_materiaux.sql`: ~80 matériaux (full hierarchy)
-- [ ] Write migration `009_seed_teintes.sql`: VITA Classical + 3D-Master
-- [ ] Write migration `010_seed_permissions.sql`: permissions + role_permission matrix (14 roles)
-- [ ] Write `db/pool.rs` and `db/mod.rs`: PgPool creation
-- [ ] Run migrations: `sqlx migrate run` → verify all tables created
-- [ ] Commit
+- [x] Write migration `001_init.sql`: `set_updated_at()` trigger, `audit_log`, `cabinet`, `utilisateur`, `permission`, `role_permission`, `user_permission_override` tables
+- [x] Write migration `002_patient.sql`: `patient`, `questionnaire_medical` tables
+- [x] Write migration `003_schema_dentaire.sql`: `schema_dentaire`, `dent`, `face_dent`, `paro_site`, `occlusion`, `atm`, `paro_global`, `prothese_amovible`, `evenement_dent` tables
+- [x] Write migration `004_diagnostic_pdt.sql`: `diagnostic`, `finding`, `plan_traitement`, `ligne_pdt` tables
+- [x] Write migration `005_reference_data.sql`: `categorie_acte`, `acte`, `acte_materiau`, `tarif_cabinet`, `categorie_materiau`, `materiau`, `teinte`, `motif_consultation`, `trouble_medical`, `document`, `document_dent` tables
+- [x] Write migration `006_rls.sql`: Enable RLS + policies on all tenant-scoped tables (hardened with WITH CHECK, FORCE RLS, crash-safe current_setting)
+- [x] Write migration `007_seed_actes.sql`: ~130 actes (14 categories, CCAM/NGAP/HN)
+- [x] Write migration `008_seed_materiaux.sql`: ~65 matériaux (full hierarchy)
+- [x] Write migration `009_seed_teintes.sql`: VITA Classical (16) + 3D-Master (29)
+- [x] Write migration `010_seed_permissions.sql`: 23 permissions + 14-role RBAC matrix (178 mappings)
+- [x] Write `db/pool.rs` and `db/mod.rs`: PgPool creation
+- [x] Run migrations: `sqlx migrate run` → 11 migrations applied, 32 tables created
+- [x] Commit
 
 ---
 
