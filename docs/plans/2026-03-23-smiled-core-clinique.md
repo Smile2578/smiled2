@@ -64,16 +64,16 @@
 - Create: `smiled-server/src/api/mod.rs`, `smiled-server/src/api/v1/mod.rs`, `auth.rs`
 - Test: `smiled-server/tests/auth_test.rs`
 
-- [ ] Write `auth/jwt.rs`: create_token, validate_token
-- [ ] Write `auth/password.rs`: hash_password (argon2), verify_password
-- [ ] Write `auth/middleware.rs`: AuthUser extractor from JWT + set tenant
-- [ ] Write `tenant/middleware.rs`: set_tenant via `SET app.current_tenant`
-- [ ] Write `auth/permissions.rs`: check_permission querying role_permission + overrides
-- [ ] Write `api/v1/auth.rs`: POST /login, POST /refresh, GET /me
-- [ ] Write test: login flow, JWT validation, /me endpoint
-- [ ] Run tests → PASS
-- [ ] Add POST /forgot-password, POST /reset-password
-- [ ] Commit
+- [x] Write `auth/jwt.rs`: create_token_pair, validate_token, validate_refresh_token (HMAC-SHA256)
+- [x] Write `auth/password.rs`: hash_password (argon2id), verify_password (distinguishes wrong pw from corruption)
+- [x] Write `auth/middleware.rs`: AuthUser extractor from JWT Bearer token
+- [x] Write `tenant/middleware.rs`: begin_tenant_transaction via set_config() (parameterized, no SQL injection)
+- [x] Write `auth/permissions.rs`: check_permission with user override priority
+- [x] Write `api/v1/auth.rs`: POST /login, POST /refresh, GET /me
+- [x] Write tests: 10 unit + 9 integration = 19 tests passing
+- [x] Run tests → PASS
+- [x] Add POST /forgot-password, POST /reset-password (with configurable URL/SMTP)
+- [x] Commit
 
 ---
 
