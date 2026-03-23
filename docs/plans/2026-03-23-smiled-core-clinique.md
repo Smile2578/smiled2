@@ -154,13 +154,13 @@
 - Create: `smiled-server/src/core/document/mod.rs`, `handlers.rs`, `storage.rs`, `types.rs`
 - Test: `smiled-server/tests/document_test.rs`
 
-- [ ] Write storage.rs: S3 abstraction (upload, download, presigned URL)
-- [ ] Write POST /patients/:id/documents/upload (multipart)
-- [ ] Write GET /patients/:id/documents
-- [ ] Write POST /documents/:id/link-dent/:fdi
-- [ ] Write tests with MinIO
-- [ ] Run tests → PASS
-- [ ] Commit
+- [x] Write storage.rs: S3Storage with upload, presigned_url, ensure_bucket (optional S3 for dev/test)
+- [x] Write POST /patients/:id/documents/upload (multipart with type validation)
+- [x] Write GET /patients/:id/documents (with dent links per doc)
+- [x] Write POST /documents/:id/link-dent/:fdi (idempotent, FDI validated)
+- [x] Write tests: 7 integration tests (upload, list, link, auth, 404)
+- [x] Run tests → 75 PASS
+- [x] Commit
 
 ---
 
