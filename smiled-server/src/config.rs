@@ -19,6 +19,8 @@ pub struct Config {
     pub smtp_port: Option<u16>,
     pub smtp_user: Option<String>,
     pub smtp_password: Option<String>,
+    pub smtp_from: String,
+    pub app_base_url: String,
     pub server_port: u16,
 }
 
@@ -115,6 +117,10 @@ impl Config {
             .transpose()?;
         let smtp_user = optional_var("SMTP_USER");
         let smtp_password = optional_var("SMTP_PASSWORD");
+        let smtp_from = optional_var("SMTP_FROM")
+            .unwrap_or_else(|| "Smiled.IO <noreply@smiled.io>".to_string());
+        let app_base_url = optional_var("APP_BASE_URL")
+            .unwrap_or_else(|| "http://localhost:3000".to_string());
 
         let server_port = optional_var("SERVER_PORT")
             .unwrap_or_else(|| "8080".to_string())
@@ -140,6 +146,8 @@ impl Config {
             smtp_port,
             smtp_user,
             smtp_password,
+            smtp_from,
+            app_base_url,
             server_port,
         })
     }

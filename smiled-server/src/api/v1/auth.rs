@@ -265,10 +265,14 @@ async fn forgot_password(
                 tracing::error!("Failed to send password reset email to {email}: {e}");
             }
         } else {
-            // In development, log the token for convenience
             tracing::info!(
                 user_id = %user.id,
-                "Password reset token generated (SMTP not configured): {reset_token}"
+                "Password reset token generated (SMTP not configured)"
+            );
+            tracing::debug!(
+                user_id = %user.id,
+                token = %reset_token,
+                "Reset token value (debug only)"
             );
         }
     }
@@ -285,6 +289,13 @@ async fn reset_password(
     State(state): State<AppState>,
     Json(body): Json<ResetPasswordRequest>,
 ) -> Result<Json<serde_json::Value>, AuthApiError> {
+    // Validate new password length early (before any expensive work)
+    if body.new_password.len() < 8 {
+        return Err(AuthApiError::ValidationError(
+            "Le mot de passe doit contenir au moins 8 caractères".to_string(),
+        ));
+    }
+
     // Decode the reset token to get user_id
     let user_id = decode_password_reset_token(&body.token, &state.config.jwt_secret)
         .map_err(|_| AuthApiError::InvalidToken)?;
@@ -319,13 +330,6 @@ async fn reset_password(
 
     if !valid {
         return Err(AuthApiError::InvalidToken);
-    }
-
-    // Validate new password length
-    if body.new_password.len() < 8 {
-        return Err(AuthApiError::ValidationError(
-            "Le mot de passe doit contenir au moins 8 caractères".to_string(),
-        ));
     }
 
     // Hash the new password
@@ -412,14 +416,14 @@ async fn send_reset_email(
     let smtp_user = state.config.smtp_user.as_deref().unwrap_or("").to_string();
     let smtp_password = state.config.smtp_password.as_deref().unwrap_or("").to_string();
 
-    let reset_url = format!("https://app.smiled.io/reset-password?token={reset_token}");
+    let reset_url = format!("{}/reset-password?token={reset_token}", state.config.app_base_url);
 
     let body = format!(
         "Bonjour {prenom},\n\nVous avez demandé une réinitialisation de votre mot de passe.\n\nCliquez sur le lien suivant (valable 1 heure) :\n{reset_url}\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\nL'équipe Smiled.IO"
     );
 
     let email = Message::builder()
-        .from("Smiled.IO <noreply@smiled.io>".parse().map_err(|e: lettre::address::AddressError| e.to_string())?)
+        .from(state.config.smtp_from.parse().map_err(|e: lettre::address::AddressError| e.to_string())?)
         .to(to_email.parse().map_err(|e: lettre::address::AddressError| e.to_string())?)
         .subject("Réinitialisation de votre mot de passe Smiled.IO")
         .header(ContentType::TEXT_PLAIN)

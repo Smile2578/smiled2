@@ -20,13 +20,17 @@ pub fn hash_password(plain: &str) -> Result<String, AuthError> {
 }
 
 /// Verify a plaintext password against a stored Argon2 hash.
+///
+/// Returns `Ok(false)` for wrong password, `Err` for corrupted hash data.
 pub fn verify_password(plain: &str, hash: &str) -> Result<bool, AuthError> {
     let parsed_hash =
         PasswordHash::new(hash).map_err(|e| AuthError::PasswordHash(e.to_string()))?;
 
-    Ok(Argon2::default()
-        .verify_password(plain.as_bytes(), &parsed_hash)
-        .is_ok())
+    match Argon2::default().verify_password(plain.as_bytes(), &parsed_hash) {
+        Ok(()) => Ok(true),
+        Err(argon2::password_hash::Error::Password) => Ok(false),
+        Err(e) => Err(AuthError::PasswordHash(e.to_string())),
+    }
 }
 
 #[cfg(test)]

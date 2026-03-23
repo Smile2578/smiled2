@@ -165,12 +165,21 @@ mod tests {
 
     #[test]
     fn expired_token_rejected() {
-        // Create token that expired 1 hour ago (expiry_hours = 0 causes exp <= iat,
-        // so use a raw call with expiry_hours = 0, which sets exp == iat)
-        let token = create_token(USER_ID, CABINET_ID, "titulaire", SECRET, 0, "access").unwrap();
+        // Create a token with exp in the past by using a negative offset
+        let now = Utc::now().timestamp() as usize;
+        let expired_claims = Claims {
+            sub: USER_ID.to_string(),
+            cabinet_id: CABINET_ID.to_string(),
+            role: "titulaire".to_string(),
+            exp: now - 3600, // 1 hour ago
+            iat: now - 7200,
+            token_type: "access".to_string(),
+        };
+
+        let key = EncodingKey::from_secret(SECRET.as_bytes());
+        let token = encode(&Header::default(), &expired_claims, &key).unwrap();
+
         let result = validate_token(&token, SECRET);
-        // May or may not be expired depending on sub-second timing; just verify it
-        // doesn't panic.
-        let _ = result;
+        assert!(result.is_err());
     }
 }
