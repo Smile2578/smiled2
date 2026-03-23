@@ -13,6 +13,7 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@nuxt/icon',
     '@nuxt/fonts',
+    'shadcn-nuxt',
   ],
 
   // Tailwind CSS configuration
@@ -23,10 +24,6 @@ export default defineNuxtConfig({
 
   // Runtime config — public vars exposed to the browser
   runtimeConfig: {
-    // Private (server-only)
-    apiSecret: '',
-
-    // Public (exposed to browser)
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://localhost:8080',
     },

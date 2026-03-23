@@ -1,3 +1,4 @@
+use axum::http::HeaderValue;
 use std::env;
 use thiserror::Error;
 
@@ -13,6 +14,7 @@ pub struct Config {
     pub tenant_mode: TenantMode,
     pub default_cabinet_id: Option<String>,
     pub cors_origins: Vec<String>,
+    pub cors_origins_parsed: Vec<HeaderValue>,
     pub smtp_host: Option<String>,
     pub smtp_port: Option<u16>,
     pub smtp_user: Option<String>,
@@ -84,12 +86,23 @@ impl Config {
             ));
         }
 
-        let cors_origins = optional_var("CORS_ORIGINS")
+        let cors_origins: Vec<String> = optional_var("CORS_ORIGINS")
             .unwrap_or_else(|| "http://localhost:3000".to_string())
             .split(',')
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
             .collect();
+
+        let cors_origins_parsed: Vec<HeaderValue> = cors_origins
+            .iter()
+            .filter(|o| *o != "*")
+            .map(|o| {
+                o.parse::<HeaderValue>().map_err(|_| ConfigError::InvalidValue {
+                    var: "CORS_ORIGINS".to_string(),
+                    reason: format!("invalid origin: {o}"),
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
 
         let smtp_host = optional_var("SMTP_HOST");
         let smtp_port = optional_var("SMTP_PORT")
@@ -122,6 +135,7 @@ impl Config {
             tenant_mode,
             default_cabinet_id,
             cors_origins,
+            cors_origins_parsed,
             smtp_host,
             smtp_port,
             smtp_user,

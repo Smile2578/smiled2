@@ -20,17 +20,17 @@
 - Create: `docker-compose.yml`, `smiled-server/Dockerfile`
 - Create: `smiled-server/.env.example`, `smiled-web/.env.example`
 
-- [ ] Init Rust project: `cargo init smiled-server`, add all crates (axum, sqlx, tokio, serde, jsonwebtoken, argon2, validator, moka, lettre, aws-sdk-s3, tower-http, uuid)
-- [ ] Write `main.rs` with basic Axum server (health check endpoint `GET /api/v1/health`)
-- [ ] Write `config.rs` loading env vars (DATABASE_URL, JWT_SECRET, S3_ENDPOINT, TENANT_MODE, CORS_ORIGINS)
-- [ ] Verify server starts: `cargo run` → `curl localhost:8080/api/v1/health`
-- [ ] Init Nuxt 4 project: `npx nuxi@latest init smiled-web`, add tailwindcss, shadcn-vue, pinia, zod
-- [ ] Create basic `app.vue` with "Smiled.IO" title
-- [ ] Verify frontend starts: `npm run dev` → browser shows page
-- [ ] Write `docker-compose.yml` with postgres:17 + minio services
-- [ ] Write `smiled-server/Dockerfile` (multi-stage Rust build)
-- [ ] Verify `docker compose up db minio` starts both services
-- [ ] Commit
+- [x] Init Rust project: `cargo init smiled-server`, add all crates (axum, sqlx, tokio, serde, jsonwebtoken, argon2, validator, moka, lettre, aws-sdk-s3, tower-http, uuid)
+- [x] Write `main.rs` with basic Axum server (health check endpoint `GET /api/v1/health`)
+- [x] Write `config.rs` loading env vars (DATABASE_URL, JWT_SECRET, S3_ENDPOINT, TENANT_MODE, CORS_ORIGINS)
+- [x] Verify server starts: `cargo run` → `curl localhost:8080/api/v1/health`
+- [x] Init Nuxt 4 project: `npx nuxi@latest init smiled-web`, add tailwindcss, shadcn-vue, pinia, zod
+- [x] Create basic `app.vue` with "Smiled.IO" title
+- [x] Verify frontend starts: `npm run build` → builds successfully
+- [x] Write `docker-compose.yml` with postgres:17 + minio services
+- [x] Write `smiled-server/Dockerfile` (multi-stage Rust build)
+- [x] Verify `docker compose up db minio` starts both services (both healthy)
+- [x] Commit
 
 ---
 

@@ -13,19 +13,26 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@nuxtjs/color-mode": "^4.0.0",
+    "@pinia/nuxt": "^0.9.0",
+    "@vueuse/core": "^12.0.0",
+    "@vueuse/nuxt": "^12.0.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "lucide-vue-next": "^0.460.0",
     "nuxt": "^4.0.0",
+    "pinia": "^2.3.0",
+    "radix-vue": "^1.9.0",
+    "shadcn-nuxt": "^0.11.0",
+    "tailwind-merge": "^2.6.0",
     "vue": "^3.5.0",
     "vue-router": "^4.5.0",
-    "@pinia/nuxt": "^0.9.0",
-    "pinia": "^2.3.0",
-    "zod": "^3.24.0",
-    "@vueuse/nuxt": "^12.0.0",
-    "@vueuse/core": "^12.0.0"
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.0.0",
-    "@nuxt/icon": "^1.0.0",
     "@nuxt/fonts": "^0.11.0",
+    "@nuxt/icon": "^1.0.0",
     "@nuxtjs/tailwindcss": "^6.12.0",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.7.0",

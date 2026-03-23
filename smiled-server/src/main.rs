@@ -1,5 +1,5 @@
 use axum::{
-    http::{header, HeaderValue, Method, StatusCode},
+    http::{header, Method, StatusCode},
     response::IntoResponse,
     routing::get,
     Json, Router,
@@ -31,7 +31,7 @@ async fn main() {
         std::process::exit(1);
     });
 
-    let cors = build_cors(&cfg.cors_origins);
+    let cors = build_cors(&cfg);
     let app = build_router(cors);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], cfg.server_port));
@@ -46,8 +46,7 @@ async fn main() {
         .expect("Server error");
 }
 
-fn build_cors(origins: &[String]) -> CorsLayer {
-    // Common allowed headers for JSON APIs with JWT auth
+fn build_cors(cfg: &Config) -> CorsLayer {
     let allowed_headers = [
         header::AUTHORIZATION,
         header::CONTENT_TYPE,
@@ -65,21 +64,15 @@ fn build_cors(origins: &[String]) -> CorsLayer {
         Method::OPTIONS,
     ];
 
-    if origins.is_empty() || origins == ["*"] {
+    if cfg.cors_origins.is_empty() || cfg.cors_origins == ["*"] {
         return CorsLayer::new()
             .allow_origin(Any)
             .allow_methods(allowed_methods)
             .allow_headers(Any);
     }
 
-    let parsed: Vec<HeaderValue> = origins
-        .iter()
-        .filter_map(|o| o.parse().ok())
-        .collect();
-
-    // With specific origins we can safely enable credentials
     CorsLayer::new()
-        .allow_origin(parsed)
+        .allow_origin(cfg.cors_origins_parsed.clone())
         .allow_methods(allowed_methods)
         .allow_headers(allowed_headers)
         .allow_credentials(true)
