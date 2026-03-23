@@ -84,13 +84,13 @@
 - Create: `smiled-server/src/core/patient/questionnaire.rs`
 - Test: `smiled-server/tests/patient_test.rs`
 
-- [ ] Write types: Patient, CreatePatient, UpdatePatient, QuestionnaireInput
-- [ ] Write queries: insert, get_by_id, list (search + pagination), update, soft_delete
-- [ ] Write handlers: GET/POST/PUT /patients, GET/PUT /patients/:id/questionnaire
-- [ ] Write tests: CRUD patient, questionnaire with all risk sections
-- [ ] Run tests → PASS
-- [ ] Wire routes in api/v1/mod.rs
-- [ ] Commit
+- [x] Write types: Patient, CreatePatient, UpdatePatient, QuestionnaireInput (with Sexe/Couverture enums)
+- [x] Write queries: insert, get_by_id, list (search + pagination), update, soft_delete (atomic versioning)
+- [x] Write handlers: GET/POST/PUT/DELETE /patients, GET/PUT /patients/:id/questionnaire
+- [x] Write tests: 12 integration tests (CRUD, search, questionnaire, RLS isolation)
+- [x] Run tests → 22 PASS (10 unit + 12 integration)
+- [x] Wire routes in api/v1/mod.rs
+- [x] Commit
 
 ---
 
