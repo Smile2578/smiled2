@@ -3,6 +3,7 @@ import type { User, LoginResponse, ApiResponse } from '~/types/api'
 
 const ACCESS_TOKEN_KEY = 'smiled_access_token'
 const REFRESH_TOKEN_KEY = 'smiled_refresh_token'
+const USER_KEY = 'smiled_user'
 
 export const useAuthStore = defineStore('auth', () => {
   const config = useRuntimeConfig()
@@ -18,6 +19,10 @@ export const useAuthStore = defineStore('auth', () => {
     if (!import.meta.client) return
     accessToken.value = localStorage.getItem(ACCESS_TOKEN_KEY)
     refreshToken.value = localStorage.getItem(REFRESH_TOKEN_KEY)
+    const storedUser = localStorage.getItem(USER_KEY)
+    if (storedUser) {
+      try { user.value = JSON.parse(storedUser) } catch { user.value = null }
+    }
   }
 
   function persistTokens(access: string, refresh: string) {
@@ -36,6 +41,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (import.meta.client) {
       localStorage.removeItem(ACCESS_TOKEN_KEY)
       localStorage.removeItem(REFRESH_TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
     }
   }
 
@@ -52,6 +58,9 @@ export const useAuthStore = defineStore('auth', () => {
     const { access_token, refresh_token, user: loggedUser } = response
     persistTokens(access_token, refresh_token)
     user.value = loggedUser
+    if (import.meta.client) {
+      localStorage.setItem(USER_KEY, JSON.stringify(loggedUser))
+    }
     await router.push('/')
   }
 

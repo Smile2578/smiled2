@@ -1,12 +1,11 @@
 const PUBLIC_PAGES = ['/login', '/forgot-password', '/reset-password']
 
 export default defineNuxtRouteMiddleware((to) => {
-  const auth = useAuthStore()
+  // Auth check only runs client-side (tokens are in localStorage)
+  if (!import.meta.client) return
 
-  // Hydrate tokens from localStorage on client-side navigation
-  if (import.meta.client) {
-    auth.hydrate()
-  }
+  const auth = useAuthStore()
+  auth.hydrate()
 
   if (PUBLIC_PAGES.includes(to.path)) return
 

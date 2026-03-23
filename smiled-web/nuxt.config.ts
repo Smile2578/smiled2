@@ -13,14 +13,13 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@nuxt/icon',
     '@nuxt/fonts',
-    'shadcn-nuxt',
   ],
 
-  // shadcn-vue configuration
-  shadcn: {
-    prefix: '',
-    componentDir: './app/components/ui',
-  },
+  // Component auto-import: resolve ui/ components by filename, not path
+  components: [
+    { path: '~/components/ui', pathPrefix: false },
+    { path: '~/components', pathPrefix: false },
+  ],
 
   // Tailwind CSS configuration
   tailwindcss: {
