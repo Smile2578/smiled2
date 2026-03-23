@@ -14,10 +14,13 @@ use tower_http::{
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
-mod config;
-mod db;
-
-use config::Config;
+// Re-use all modules from the library crate
+use smiled_server::{
+    api,
+    config::Config,
+    db::pool::create_pool,
+    state::AppState,
+};
 
 #[tokio::main]
 async fn main() {
@@ -32,8 +35,16 @@ async fn main() {
         std::process::exit(1);
     });
 
+    let pool = create_pool(&cfg.database_url)
+        .await
+        .unwrap_or_else(|e| {
+            eprintln!("Database connection error: {e}");
+            std::process::exit(1);
+        });
+
+    let state = AppState::new(pool, cfg.clone());
     let cors = build_cors(&cfg);
-    let app = build_router(cors);
+    let app = build_router(state, cors);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], cfg.server_port));
     info!("Smiled.IO server listening on {addr}");
@@ -79,9 +90,11 @@ fn build_cors(cfg: &Config) -> CorsLayer {
         .allow_credentials(true)
 }
 
-fn build_router(cors: CorsLayer) -> Router {
+fn build_router(state: AppState, cors: CorsLayer) -> Router {
     Router::new()
         .route("/api/v1/health", get(health_handler))
+        .merge(api::v1::router())
+        .with_state(state)
         .layer(cors)
         .layer(TimeoutLayer::new(Duration::from_secs(30)))
         .layer(TraceLayer::new_for_http())
@@ -111,14 +124,17 @@ mod tests {
     use axum::http::StatusCode;
     use axum_test::TestServer;
 
-    fn test_app() -> Router {
-        let cors = CorsLayer::new().allow_origin(Any);
-        build_router(cors)
+    fn test_cors() -> CorsLayer {
+        CorsLayer::new().allow_origin(Any)
     }
 
     #[tokio::test]
     async fn health_returns_ok() {
-        let server = TestServer::new(test_app()).unwrap();
+        let app = Router::new()
+            .route("/api/v1/health", get(health_handler))
+            .layer(test_cors());
+
+        let server = TestServer::new(app).unwrap();
         let response = server.get("/api/v1/health").await;
         assert_eq!(response.status_code(), StatusCode::OK);
 
@@ -129,7 +145,11 @@ mod tests {
 
     #[tokio::test]
     async fn unknown_route_returns_404() {
-        let server = TestServer::new(test_app()).unwrap();
+        let app = Router::new()
+            .route("/api/v1/health", get(health_handler))
+            .layer(test_cors());
+
+        let server = TestServer::new(app).unwrap();
         let response = server.get("/api/v1/unknown").await;
         assert_eq!(response.status_code(), StatusCode::NOT_FOUND);
     }

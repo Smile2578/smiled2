@@ -9,6 +9,10 @@ description = "Smiled.IO dental software backend — Axum + PostgreSQL + S3"
 name = "smiled-server"
 path = "src/main.rs"
 
+[lib]
+name = "smiled_server"
+path = "src/lib.rs"
+
 [dependencies]
 # HTTP framework
 axum = { version = "0.7", features = ["macros"] }
@@ -65,6 +69,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
 # Environment
 dotenvy = "0.15"
+
+# Async trait support
+async-trait = "0.1"
 
 # Errors
 thiserror = "1"
