@@ -118,16 +118,16 @@
 - Create: `smiled-server/src/core/historique/mod.rs`, `handlers.rs`
 - Test: `smiled-server/tests/schema_dentaire_test.rs`
 
-- [ ] Write types: DentalSchema, Tooth, ToothFace, ParoSite, Occlusion, Atm, ParoGlobal
-- [ ] Write POST /patients/:id/schema: create version, init 32 teeth + faces + paro sites
-- [ ] Write GET /patients/:id/schema: return full schema (teeth + faces + paro)
-- [ ] Write PUT /patients/:id/schema/dent/:fdi: update tooth state
-- [ ] Write GET/PUT paro, occlusion, atm, paro-global endpoints
-- [ ] Write GET /patients/:id/schema/versions
-- [ ] Write GET /patients/:id/dent/:fdi/timeline
-- [ ] Write tests: create v1, modify, create v2, verify versioning
-- [ ] Run tests → PASS
-- [ ] Commit
+- [x] Write types: DentalSchema, Tooth, ToothFace, ParoSite, Occlusion, Atm, ParoGlobal + all inputs
+- [x] Write POST /patients/:id/schema: create version, init teeth + 6 faces + 6 paro sites each
+- [x] Write GET /patients/:id/schema: return full nested schema (?version=N support)
+- [x] Write PUT /patients/:id/schema/dent/:fdi: update tooth state (with RBAC)
+- [x] Write GET/PUT paro, occlusion, atm, paro-global endpoints (with RBAC)
+- [x] Write GET /patients/:id/schema/versions
+- [x] Write GET /patients/:id/dent/:fdi/timeline (evenement_dent)
+- [x] Write tests: 13 integration tests (create, modify, versioning, paro, occlusion, ATM, timeline, auth)
+- [x] Run tests → 56 PASS
+- [x] Commit
 
 ---
 
