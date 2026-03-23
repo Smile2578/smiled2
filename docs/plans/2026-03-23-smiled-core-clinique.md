@@ -102,12 +102,12 @@
 - Create: `smiled-server/src/reference/teinte.rs`, `motif.rs`, `trouble.rs`
 - Test: `smiled-server/tests/reference_test.rs`
 
-- [ ] Write acte CRUD: list (merge système + cabinet), create, update, toggle, tarif override
-- [ ] Write materiau CRUD: list with hierarchy, create, update
-- [ ] Write teinte/motif/trouble CRUD
-- [ ] Write tests: verify seed data, create custom acte, override tarif
-- [ ] Run tests → PASS
-- [ ] Commit
+- [x] Write acte CRUD: list (merge système + cabinet with tarif overlay), create, update, toggle, tarif override
+- [x] Write materiau CRUD: list with category hierarchy, create, update
+- [x] Write teinte/motif/trouble CRUD (all with RBAC guards)
+- [x] Write tests: 10 integration tests (seed data, custom acte, tarif override, toggle, auth)
+- [x] Run tests → 20 PASS (10 unit + 10 reference)
+- [x] Commit
 
 ---
 
