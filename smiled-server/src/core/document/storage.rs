@@ -104,6 +104,17 @@ impl S3Storage {
         Ok(presigned.uri().to_string())
     }
 
+    /// Check if the bucket is accessible (HEAD bucket). Used by deep health check.
+    pub async fn check_bucket_access(&self) -> Result<(), StorageError> {
+        self.client
+            .head_bucket()
+            .bucket(&self.bucket)
+            .send()
+            .await
+            .map_err(|e| StorageError::BucketSetup(e.to_string()))?;
+        Ok(())
+    }
+
     /// Create the bucket if it does not already exist.
     pub async fn ensure_bucket(&self) -> Result<(), StorageError> {
         let result = self

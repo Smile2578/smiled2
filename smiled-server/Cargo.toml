@@ -22,7 +22,7 @@ tokio = { version = "1", features = ["full"] }
 
 # Middleware
 tower = { version = "0.4" }
-tower-http = { version = "0.5", features = ["cors", "trace", "timeout", "compression-gzip"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "timeout", "compression-gzip", "set-header", "request-id"] }
 
 # Database
 sqlx = { version = "0.8", features = [
@@ -74,6 +74,16 @@ dotenvy = "0.15"
 
 # Async trait support
 async-trait = "0.1"
+
+# File type detection (magic bytes)
+infer = "0.16"
+
+# Rate limiting
+tower_governor = { version = "0.4.3", features = ["axum"] }
+
+# Cookies
+tower-cookies = "0.10"
+cookie = { version = "0.18", features = ["secure", "percent-encode"] }
 
 # Errors
 thiserror = "1"

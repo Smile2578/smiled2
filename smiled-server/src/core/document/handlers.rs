@@ -7,7 +7,10 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    auth::middleware::AuthUser,
+    auth::{
+        middleware::AuthUser,
+        permissions::{PermissionDenied, RequirePermission},
+    },
     core::patient::types::ApiResponse,
     state::AppState,
     tenant::middleware::begin_tenant_transaction,
@@ -34,12 +37,11 @@ pub async fn upload_document_handler(
     Path(patient_id): Path<Uuid>,
     mut multipart: Multipart,
 ) -> Result<impl IntoResponse, DocumentApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(DocumentApiError::Forbidden);
-    }
+    RequirePermission("document.upload").check(&state, &auth_user).await?;
 
     let upload = parse_multipart(&mut multipart).await?;
 
+    validate_magic_bytes(&upload.data, &upload.mime_type)?;
     validate_document_type(&upload.document_type)?;
 
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
@@ -131,9 +133,7 @@ pub async fn link_dent_handler(
     auth_user: AuthUser,
     Path((patient_id, doc_id, fdi)): Path<(Uuid, Uuid, i16)>,
 ) -> Result<impl IntoResponse, DocumentApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(DocumentApiError::Forbidden);
-    }
+    RequirePermission("document.upload").check(&state, &auth_user).await?;
 
     validate_fdi(fdi)?;
 
@@ -244,6 +244,36 @@ fn validate_document_type(doc_type: &str) -> Result<(), DocumentApiError> {
     Ok(())
 }
 
+/// Validate actual file content type using magic bytes.
+/// Rejects files whose real type does not match the allowed list.
+fn validate_magic_bytes(data: &[u8], claimed_mime: &str) -> Result<(), DocumentApiError> {
+    const ALLOWED_MIME: &[&str] = &[
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "application/pdf",
+    ];
+
+    let detected = infer::get(data);
+    let actual_mime = detected.map(|t| t.mime_type()).unwrap_or("unknown");
+
+    if actual_mime != claimed_mime {
+        tracing::warn!(
+            claimed = claimed_mime,
+            detected = actual_mime,
+            "MIME type mismatch between Content-Type and magic bytes"
+        );
+    }
+
+    if !ALLOWED_MIME.contains(&actual_mime) {
+        return Err(DocumentApiError::Validation(format!(
+            "Type de fichier detecte non autorise: '{actual_mime}'. Types acceptes: jpeg, png, webp, pdf"
+        )));
+    }
+
+    Ok(())
+}
+
 /// FDI tooth numbering: primary teeth 51–85, permanent 11–48.
 fn validate_fdi(fdi: i16) -> Result<(), DocumentApiError> {
     let valid = (11..=18).contains(&fdi)
@@ -274,6 +304,15 @@ pub enum DocumentApiError {
     Validation(String),
     Storage(String),
     Database(String),
+}
+
+impl From<PermissionDenied> for DocumentApiError {
+    fn from(e: PermissionDenied) -> Self {
+        match e {
+            PermissionDenied::Forbidden => Self::Forbidden,
+            PermissionDenied::Internal(msg) => Self::Database(msg),
+        }
+    }
 }
 
 impl IntoResponse for DocumentApiError {

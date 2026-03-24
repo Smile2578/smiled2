@@ -398,7 +398,7 @@ fn decode_password_reset_token(token: &str, secret: &str) -> Result<Uuid, AuthEr
         .map_err(|_| AuthError::InvalidToken("Bad user_id".to_string()))
 }
 
-/// Send a password reset email using the configured SMTP server.
+/// Send a password reset email using the configured SMTP server (async, non-blocking).
 async fn send_reset_email(
     state: &AppState,
     to_email: &str,
@@ -408,7 +408,7 @@ async fn send_reset_email(
     use lettre::{
         message::header::ContentType,
         transport::smtp::authentication::Credentials,
-        Message, SmtpTransport, Transport,
+        AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
     };
 
     let smtp_host = state.config.smtp_host.as_deref().unwrap_or("");
@@ -432,13 +432,14 @@ async fn send_reset_email(
 
     let creds = Credentials::new(smtp_user, smtp_password);
 
-    let mailer = SmtpTransport::starttls_relay(smtp_host)
-        .map_err(|e| e.to_string())?
-        .port(smtp_port)
-        .credentials(creds)
-        .build();
+    let mailer: AsyncSmtpTransport<Tokio1Executor> =
+        AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_host)
+            .map_err(|e| e.to_string())?
+            .port(smtp_port)
+            .credentials(creds)
+            .build();
 
-    mailer.send(&email).map_err(|e| e.to_string())?;
+    mailer.send(email).await.map_err(|e| e.to_string())?;
 
     Ok(())
 }
