@@ -1,8 +1,10 @@
 pub mod acte;
+pub mod cabinet;
 pub mod diagnostic;
 pub mod document;
 pub mod historique;
 pub mod materiau;
 pub mod patient;
 pub mod pdt;
+pub mod prothese;
 pub mod schema_dentaire;
