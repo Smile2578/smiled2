@@ -53,50 +53,63 @@ pub async fn insert_document(
 
 // ─── List documents for patient ──────────────────────────────────────────────
 
+/// Intermediate row for the single-query documents + linked teeth fetch.
+#[derive(sqlx::FromRow)]
+struct DocumentWithLinkedTeethRow {
+    id: Uuid,
+    patient_id: Uuid,
+    cabinet_id: Uuid,
+    r#type: String,
+    url_storage: String,
+    filename: Option<String>,
+    mime_type: Option<String>,
+    uploaded_by: Uuid,
+    uploaded_at: Option<chrono::DateTime<chrono::Utc>>,
+    linked_teeth: Vec<i16>,
+}
+
 /// List all documents for a patient with their linked FDI tooth numbers.
+/// Uses a single query with LEFT JOIN + array_agg to avoid N+1.
 pub async fn list_documents_for_patient(
     tx: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     patient_id: Uuid,
 ) -> Result<Vec<DocumentWithLinks>, sqlx::Error> {
-    // Fetch documents
-    let docs = sqlx::query_as!(
-        Document,
+    let rows = sqlx::query_as!(
+        DocumentWithLinkedTeethRow,
         r#"
-        SELECT id, patient_id, cabinet_id, type, url_storage,
-               filename, mime_type, uploaded_by, uploaded_at
-        FROM document
-        WHERE patient_id = $1
-        ORDER BY uploaded_at DESC
+        SELECT
+            d.id, d.patient_id, d.cabinet_id, d.type, d.url_storage,
+            d.filename, d.mime_type, d.uploaded_by, d.uploaded_at,
+            COALESCE(
+                array_agg(dd.dent_fdi ORDER BY dd.dent_fdi) FILTER (WHERE dd.dent_fdi IS NOT NULL),
+                '{}'
+            ) as "linked_teeth!: Vec<i16>"
+        FROM document d
+        LEFT JOIN document_dent dd ON dd.document_id = d.id
+        WHERE d.patient_id = $1
+        GROUP BY d.id
+        ORDER BY d.uploaded_at DESC
         "#,
         patient_id,
     )
     .fetch_all(&mut **tx)
     .await?;
 
-    // For each document, fetch its dent links
-    let mut result = Vec::with_capacity(docs.len());
-
-    for doc in docs {
-        let dents = sqlx::query_scalar!(
-            "SELECT dent_fdi FROM document_dent WHERE document_id = $1 ORDER BY dent_fdi",
-            doc.id,
-        )
-        .fetch_all(&mut **tx)
-        .await?;
-
-        result.push(DocumentWithLinks {
-            id: doc.id,
-            patient_id: doc.patient_id,
-            cabinet_id: doc.cabinet_id,
-            r#type: doc.r#type,
-            url_storage: doc.url_storage,
-            filename: doc.filename,
-            mime_type: doc.mime_type,
-            uploaded_by: doc.uploaded_by,
-            uploaded_at: doc.uploaded_at,
-            dents_fdi: dents,
-        });
-    }
+    let result = rows
+        .into_iter()
+        .map(|row| DocumentWithLinks {
+            id: row.id,
+            patient_id: row.patient_id,
+            cabinet_id: row.cabinet_id,
+            r#type: row.r#type,
+            url_storage: row.url_storage,
+            filename: row.filename,
+            mime_type: row.mime_type,
+            uploaded_by: row.uploaded_by,
+            uploaded_at: row.uploaded_at,
+            dents_fdi: row.linked_teeth,
+        })
+        .collect();
 
     Ok(result)
 }

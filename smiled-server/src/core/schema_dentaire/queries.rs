@@ -43,17 +43,19 @@ pub async fn insert_schema(
     .await
 }
 
-/// Insert a single tooth row into a schema.
-pub async fn insert_tooth(
+/// Batch-insert all teeth for a schema using UNNEST (single INSERT).
+async fn batch_insert_teeth(
     tx: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     schema_id: Uuid,
-    numero_fdi: i16,
-) -> Result<Tooth, sqlx::Error> {
+    fdi_numbers: &[i16],
+) -> Result<Vec<Tooth>, sqlx::Error> {
+    let schema_ids: Vec<Uuid> = fdi_numbers.iter().map(|_| schema_id).collect();
+
     sqlx::query_as!(
         Tooth,
         r#"
         INSERT INTO dent (schema_id, numero_fdi)
-        VALUES ($1, $2)
+        SELECT * FROM UNNEST($1::uuid[], $2::int2[])
         RETURNING
             id, schema_id, numero_fdi, successeur_fdi, statut, eruption,
             prothese_fixe, endo, racine, implant, ortho, traumatisme,
@@ -61,56 +63,69 @@ pub async fn insert_tooth(
             paro_mobilite, paro_furcation, paro_recession_class,
             media_ids, updated_at
         "#,
-        schema_id,
-        numero_fdi,
+        &schema_ids as &[Uuid],
+        fdi_numbers,
     )
-    .fetch_one(&mut **tx)
+    .fetch_all(&mut **tx)
     .await
 }
 
-/// Insert all 6 faces for a tooth.
-pub async fn insert_tooth_faces(
+/// Batch-insert all faces for multiple teeth using UNNEST (single INSERT).
+async fn batch_insert_faces(
     tx: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tooth_id: Uuid,
-) -> Result<Vec<ToothFace>, sqlx::Error> {
-    // Build unnest arrays to insert all 6 faces in a single statement
-    let tooth_ids: Vec<Uuid> = TOOTH_FACES.iter().map(|_| tooth_id).collect();
-    let faces: Vec<&str> = TOOTH_FACES.to_vec();
+    tooth_ids: &[Uuid],
+) -> Result<(), sqlx::Error> {
+    let mut all_tooth_ids: Vec<Uuid> = Vec::with_capacity(tooth_ids.len() * TOOTH_FACES.len());
+    let mut all_faces: Vec<&str> = Vec::with_capacity(tooth_ids.len() * TOOTH_FACES.len());
 
-    sqlx::query_as!(
-        ToothFace,
+    for &tid in tooth_ids {
+        for &face in TOOTH_FACES {
+            all_tooth_ids.push(tid);
+            all_faces.push(face);
+        }
+    }
+
+    sqlx::query!(
         r#"
         INSERT INTO face_dent (dent_id, face)
         SELECT * FROM UNNEST($1::uuid[], $2::text[])
-        RETURNING id, dent_id, face, etat, restauration, updated_at
         "#,
-        &tooth_ids as &[Uuid],
-        &faces as &[&str],
+        &all_tooth_ids as &[Uuid],
+        &all_faces as &[&str],
     )
-    .fetch_all(&mut **tx)
-    .await
+    .execute(&mut **tx)
+    .await?;
+
+    Ok(())
 }
 
-/// Insert all 6 paro sites for a tooth.
-pub async fn insert_paro_sites(
+/// Batch-insert all paro sites for multiple teeth using UNNEST (single INSERT).
+async fn batch_insert_paro_sites(
     tx: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-    tooth_id: Uuid,
-) -> Result<Vec<ParoSite>, sqlx::Error> {
-    let tooth_ids: Vec<Uuid> = PARO_SITES.iter().map(|_| tooth_id).collect();
-    let sites: Vec<&str> = PARO_SITES.to_vec();
+    tooth_ids: &[Uuid],
+) -> Result<(), sqlx::Error> {
+    let mut all_tooth_ids: Vec<Uuid> = Vec::with_capacity(tooth_ids.len() * PARO_SITES.len());
+    let mut all_sites: Vec<&str> = Vec::with_capacity(tooth_ids.len() * PARO_SITES.len());
 
-    sqlx::query_as!(
-        ParoSite,
+    for &tid in tooth_ids {
+        for &site in PARO_SITES {
+            all_tooth_ids.push(tid);
+            all_sites.push(site);
+        }
+    }
+
+    sqlx::query!(
         r#"
         INSERT INTO paro_site (dent_id, site)
         SELECT * FROM UNNEST($1::uuid[], $2::text[])
-        RETURNING id, dent_id, site, profondeur_poche, recession, bop, suppuration, plaque, updated_at
         "#,
-        &tooth_ids as &[Uuid],
-        &sites as &[&str],
+        &all_tooth_ids as &[Uuid],
+        &all_sites as &[&str],
     )
-    .fetch_all(&mut **tx)
-    .await
+    .execute(&mut **tx)
+    .await?;
+
+    Ok(())
 }
 
 /// Insert an empty occlusion row for a schema.
@@ -177,6 +192,7 @@ pub async fn insert_paro_global(
 
 /// Initialize all teeth (with faces and paro sites) for a newly created schema.
 ///
+/// Uses 3 batch INSERTs instead of per-tooth loops (96 queries -> 3 queries).
 /// Returns the list of teeth IDs inserted.
 pub async fn init_schema_teeth(
     tx: &mut sqlx::Transaction<'static, sqlx::Postgres>,
@@ -184,15 +200,16 @@ pub async fn init_schema_teeth(
     dentition: &str,
 ) -> Result<Vec<Uuid>, sqlx::Error> {
     let fdi_numbers = fdi_for_dentition(dentition);
-    let mut tooth_ids = Vec::with_capacity(fdi_numbers.len());
 
-    for fdi in fdi_numbers {
-        let tooth = insert_tooth(tx, schema_id, fdi).await?;
-        let tooth_id = tooth.id;
-        insert_tooth_faces(tx, tooth_id).await?;
-        insert_paro_sites(tx, tooth_id).await?;
-        tooth_ids.push(tooth_id);
-    }
+    // 1. Batch-insert all teeth (1 query)
+    let teeth = batch_insert_teeth(tx, schema_id, &fdi_numbers).await?;
+    let tooth_ids: Vec<Uuid> = teeth.iter().map(|t| t.id).collect();
+
+    // 2. Batch-insert all faces for all teeth (1 query)
+    batch_insert_faces(tx, &tooth_ids).await?;
+
+    // 3. Batch-insert all paro sites for all teeth (1 query)
+    batch_insert_paro_sites(tx, &tooth_ids).await?;
 
     Ok(tooth_ids)
 }
