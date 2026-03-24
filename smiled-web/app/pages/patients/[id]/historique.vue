@@ -1,18 +1,5 @@
 <template>
-  <div class="p-8">
-    <!-- Header -->
-    <div class="flex items-center gap-4 mb-6">
-      <Button variant="ghost" size="sm" @click="navigateTo(`/patients/${patientId}`)">
-        <Icon name="lucide:arrow-left" class="w-4 h-4 mr-2" />
-        Retour
-      </Button>
-      <Separator orientation="vertical" class="h-6" />
-      <div>
-        <h1 class="text-2xl font-bold">Historique</h1>
-        <p class="text-sm text-muted-foreground">Chronologie des actes par dent</p>
-      </div>
-    </div>
-
+  <div>
     <!-- Tooth selector -->
     <Card class="mb-6">
       <CardContent class="pt-6">
@@ -121,8 +108,7 @@
 
 <script setup lang="ts">
 import type { HistoriqueEvent } from '~/composables/useHistorique'
-
-definePageMeta({ layout: 'default' })
+import { formatDate } from '~/utils/format'
 
 const COMMON_TEETH = [
   18, 17, 16, 15, 14, 13, 12, 11,
@@ -159,14 +145,6 @@ async function fetchTimeline(): Promise<void> {
   } finally {
     loadingTimeline.value = false
   }
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
 }
 
 function eventTypeLabel(type: string): string {

@@ -1,22 +1,5 @@
 <template>
-  <div class="p-8">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-4">
-        <Button variant="ghost" size="sm" @click="navigateTo(`/patients/${patientId}`)">
-          <Icon name="lucide:arrow-left" class="w-4 h-4 mr-2" />
-          Retour
-        </Button>
-        <Separator orientation="vertical" class="h-6" />
-        <div>
-          <h1 class="text-2xl font-bold">Documents</h1>
-          <p class="text-sm text-muted-foreground">
-            {{ documents.length }} document{{ documents.length !== 1 ? 's' : '' }}
-          </p>
-        </div>
-      </div>
-    </div>
-
+  <div>
     <!-- Upload zone -->
     <Card class="mb-6">
       <CardHeader>
@@ -207,8 +190,7 @@
 
 <script setup lang="ts">
 import type { PatientDocument, DocumentType } from '~/composables/useDocument'
-
-definePageMeta({ layout: 'default' })
+import { formatDate } from '~/utils/format'
 
 const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
   { value: 'radio', label: 'Radiographie' },
@@ -315,10 +297,6 @@ function documentIcon(type: DocumentType): string {
 
 function typeLabel(type: DocumentType): string {
   return DOCUMENT_TYPES.find((t) => t.value === type)?.label ?? type
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('fr-FR')
 }
 
 function formatSize(bytes: number): string {

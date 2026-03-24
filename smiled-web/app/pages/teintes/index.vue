@@ -37,11 +37,12 @@
             <div
               v-for="teinte in items"
               :key="teinte.id"
-              class="group relative flex items-center justify-center w-16 h-10 rounded border cursor-pointer hover:border-primary transition-colors"
+              class="group relative flex items-center justify-center w-16 h-10 rounded border border-border/60 cursor-pointer hover:border-primary hover:shadow-sm transition-all"
               :title="teinte.libelle"
+              :style="{ backgroundColor: shadeColor(teinte.code) }"
               @click="openEditDialog(teinte)"
             >
-              <span class="text-xs font-medium">{{ teinte.code }}</span>
+              <span class="text-xs font-medium drop-shadow-[0_1px_1px_rgba(255,255,255,0.6)]">{{ teinte.code }}</span>
               <div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 rounded transition-opacity" />
             </div>
           </div>
@@ -115,6 +116,18 @@ const form = reactive({
   libelle: '',
   systeme: '',
 })
+
+function shadeColor(code: string): string {
+  const classicalColors: Record<string, string> = {
+    'A1': '#F5E6D0', 'A2': '#EDD9B9', 'A3': '#E5CC9F', 'A3.5': '#DFC28D',
+    'A4': '#D4B070', 'B1': '#F2E8D4', 'B2': '#EBD9B5', 'B3': '#DFC89A',
+    'B4': '#D4B67D', 'C1': '#EDE0C8', 'C2': '#DFD0AC', 'C3': '#D0BF93',
+    'C4': '#C2AE7D', 'D2': '#E8D4B0', 'D3': '#DDC89A', 'D4': '#D0BA85',
+  }
+  if (code.match(/^\dM\d$/)) return '#F0DCC0'
+  if (code.match(/^\d[LR]\d/)) return '#ECD5B5'
+  return classicalColors[code] ?? '#F5F0E8'
+}
 
 const groupedTeintes = computed(() => {
   const map = new Map<string | null, Teinte[]>()

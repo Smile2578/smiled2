@@ -1,20 +1,10 @@
 <template>
-  <div class="p-8">
-    <!-- Header -->
+  <div>
+    <!-- Actions bar -->
     <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-4">
-        <Button variant="ghost" size="sm" @click="navigateTo(`/patients/${patientId}`)">
-          <Icon name="lucide:arrow-left" class="w-4 h-4 mr-2" />
-          Retour
-        </Button>
-        <Separator orientation="vertical" class="h-6" />
-        <div>
-          <h1 class="text-2xl font-bold">Diagnostics</h1>
-          <p class="text-sm text-muted-foreground">
-            {{ diagnostics.length }} diagnostic{{ diagnostics.length !== 1 ? 's' : '' }}
-          </p>
-        </div>
-      </div>
+      <p class="text-sm text-muted-foreground">
+        {{ diagnostics.length }} diagnostic{{ diagnostics.length !== 1 ? 's' : '' }}
+      </p>
       <Button @click="showNewDialog = true">
         <Icon name="lucide:plus" class="w-4 h-4 mr-2" />
         Nouveau diagnostic
@@ -215,8 +205,7 @@
 
 <script setup lang="ts">
 import type { Diagnostic } from '~/composables/useDiagnostic'
-
-definePageMeta({ layout: 'default' })
+import { formatDate } from '~/utils/format'
 
 const route = useRoute()
 const patientId = route.params.id as string
@@ -261,14 +250,6 @@ function toggleExpand(id: string): void {
     next.add(id)
   }
   expanded.value = next
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  })
 }
 
 function sourceVariant(source: string): 'default' | 'secondary' | 'outline' {

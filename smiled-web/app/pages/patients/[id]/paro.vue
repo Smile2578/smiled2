@@ -1,18 +1,5 @@
 <template>
-  <div class="p-8">
-    <!-- Header -->
-    <div class="flex items-center gap-4 mb-6">
-      <Button variant="ghost" size="sm" @click="navigateTo(`/patients/${patientId}`)">
-        <Icon name="lucide:arrow-left" class="w-4 h-4 mr-2" />
-        Retour
-      </Button>
-      <Separator orientation="vertical" class="h-6" />
-      <div>
-        <h1 class="text-2xl font-bold">Bilan parodontal</h1>
-        <p class="text-sm text-muted-foreground">Saisie des indices parodontaux par dent et par site</p>
-      </div>
-    </div>
-
+  <div>
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center h-64">
       <Icon name="lucide:loader-2" class="w-8 h-8 animate-spin text-muted-foreground" />
@@ -135,8 +122,6 @@
 <script setup lang="ts">
 import type { ParoSite, ParoSiteUpdate } from '~/composables/useParo'
 import ParoChart from '~/components/paro/ParoChart.vue'
-
-definePageMeta({ layout: 'default' })
 
 const route = useRoute()
 const patientId = route.params.id as string

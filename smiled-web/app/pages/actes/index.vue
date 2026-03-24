@@ -47,7 +47,7 @@
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Code</TableHead>
+            <TableHead class="w-32">Code</TableHead>
             <TableHead>Libellé</TableHead>
             <TableHead>Nomenclature</TableHead>
             <TableHead class="text-right">Prix défaut</TableHead>
@@ -60,7 +60,7 @@
             <p class="text-muted-foreground">Aucun acte trouvé</p>
           </TableEmpty>
           <TableRow v-for="acte in filteredActes" :key="acte.id">
-            <TableCell class="font-mono text-xs">{{ acte.code ?? '—' }}</TableCell>
+            <TableCell class="font-mono text-xs whitespace-nowrap">{{ acte.code || nomenclatureLabel(acte.nomenclature) }}</TableCell>
             <TableCell>
               <div>
                 <p class="font-medium text-sm">{{ acte.libelle }}</p>

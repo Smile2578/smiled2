@@ -1,18 +1,8 @@
 <template>
-  <div class="p-8">
-    <!-- Header -->
+  <div>
+    <!-- Actions bar -->
     <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-4">
-        <Button variant="ghost" size="sm" @click="navigateTo(`/patients/${patientId}`)">
-          <Icon name="lucide:arrow-left" class="w-4 h-4 mr-2" />
-          Retour
-        </Button>
-        <Separator orientation="vertical" class="h-6" />
-        <div>
-          <h1 class="text-2xl font-bold">Plans de traitement</h1>
-          <p class="text-sm text-muted-foreground">Propositions thérapeutiques par formule</p>
-        </div>
-      </div>
+      <p class="text-sm text-muted-foreground">Propositions thérapeutiques par formule</p>
       <Button @click="showNewDialog = true">
         <Icon name="lucide:plus" class="w-4 h-4 mr-2" />
         Nouveau plan
@@ -188,9 +178,8 @@
 
 <script setup lang="ts">
 import type { Pdt, PdtFormule, PdtStatus, CreatePdtLineInput } from '~/composables/usePdt'
+import { formatDate, formatPrice } from '~/utils/format'
 import PdtBuilder from '~/components/pdt/PdtBuilder.vue'
-
-definePageMeta({ layout: 'default' })
 
 const FORMULES: PdtFormule[] = ['lab', 'compromis_1', 'compromis_2', 'budget']
 
@@ -252,14 +241,6 @@ function statusClass(s: PdtStatus): string {
     refuse: 'bg-red-100 text-red-700',
   }
   return classes[s] ?? ''
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('fr-FR')
-}
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price)
 }
 
 function openNewWithFormule(formule: PdtFormule): void {

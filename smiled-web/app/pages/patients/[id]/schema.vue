@@ -1,19 +1,8 @@
 <template>
-  <div class="flex flex-col h-full">
-    <!-- Page header -->
-    <div class="flex items-center justify-between px-6 py-4 border-b bg-white shrink-0">
-      <div class="flex items-center gap-3">
-        <NuxtLink
-          :to="`/patients/${patientId}`"
-          class="text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <Icon name="lucide:arrow-left" class="w-5 h-5" />
-        </NuxtLink>
-        <div>
-          <h1 class="text-lg font-semibold text-gray-900">Schéma dentaire</h1>
-          <p class="text-xs text-gray-500">Cliquez sur une dent pour la modifier</p>
-        </div>
-      </div>
+  <div>
+    <!-- Toolbar -->
+    <div class="flex items-center justify-between mb-4">
+      <p class="text-xs text-gray-500">Cliquez sur une dent pour la modifier</p>
 
       <div class="flex items-center gap-3">
         <!-- Version selector -->
@@ -43,12 +32,12 @@
     </div>
 
     <!-- Error banner -->
-    <div v-if="error" class="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-600">
+    <div v-if="error" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-600">
       {{ error }}
     </div>
 
     <!-- Loading state -->
-    <div v-if="loading" class="flex-1 flex items-center justify-center">
+    <div v-if="loading" class="flex items-center justify-center h-64">
       <div class="flex items-center gap-3 text-gray-400">
         <Icon name="lucide:loader-2" class="w-5 h-5 animate-spin" />
         <span>Chargement du schéma...</span>
@@ -56,7 +45,7 @@
     </div>
 
     <!-- No schema state -->
-    <div v-else-if="!schema && !loading" class="flex-1 flex flex-col items-center justify-center gap-4 text-gray-400">
+    <div v-else-if="!schema && !loading" class="flex flex-col items-center justify-center gap-4 text-gray-400 py-16">
       <Icon name="lucide:scan-face" class="w-16 h-16 opacity-30" />
       <p class="text-base">Aucun schéma dentaire pour ce patient</p>
       <button
@@ -69,9 +58,9 @@
     </div>
 
     <!-- Chart + panel layout -->
-    <div v-else-if="schema" class="flex flex-1 overflow-hidden">
+    <div v-else-if="schema" class="flex overflow-hidden">
       <!-- Main chart area -->
-      <div class="flex-1 flex flex-col overflow-auto p-6 gap-4">
+      <div class="flex-1 flex flex-col overflow-auto gap-4">
         <!-- Dentition badge -->
         <div class="flex items-center gap-2">
           <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
@@ -170,8 +159,6 @@ import { TOOTH_STATUS_LABELS } from '~/components/dental-chart/types'
 import DentalChart from '~/components/dental-chart/DentalChart.vue'
 import ToothDetailPanel from '~/components/dental-chart/ToothDetailPanel.vue'
 import ChartLegend from '~/components/dental-chart/ChartLegend.vue'
-
-definePageMeta({ layout: 'default' })
 
 const route = useRoute()
 const patientId = computed(() => route.params.id as string)

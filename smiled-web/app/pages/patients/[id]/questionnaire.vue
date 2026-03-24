@@ -1,20 +1,10 @@
 <template>
-  <div class="p-8">
-    <!-- Header -->
-    <div class="flex items-center gap-4 mb-6">
-      <Button variant="ghost" size="sm" @click="navigateTo(`/patients/${patientId}`)">
-        <Icon name="lucide:arrow-left" class="w-4 h-4 mr-2" />
-        Retour à la fiche
-      </Button>
-      <Separator orientation="vertical" class="h-6" />
-      <div>
-        <h1 class="text-2xl font-bold">Questionnaire médical</h1>
-        <p v-if="questionnaire" class="text-sm text-muted-foreground">
-          Version {{ questionnaire.version }}
-          · Mis à jour le {{ formatDate(questionnaire.updated_at) }}
-        </p>
-      </div>
-    </div>
+  <div>
+    <!-- Version info -->
+    <p v-if="questionnaire" class="text-sm text-muted-foreground mb-4">
+      Version {{ questionnaire.version }}
+      · Mis à jour le {{ formatDate(questionnaire.updated_at) }}
+    </p>
 
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center h-64">

@@ -41,7 +41,7 @@
             :name="collapsedCategories.has(category) ? 'lucide:chevron-right' : 'lucide:chevron-down'"
             class="w-4 h-4 text-muted-foreground"
           />
-          <span class="font-semibold text-sm">{{ category }}</span>
+          <span class="font-semibold text-sm">{{ category || 'Non categorise' }}</span>
           <Badge variant="secondary" class="text-xs">{{ items.length }}</Badge>
         </button>
 
@@ -213,8 +213,9 @@ const filteredMateriaux = computed(() => {
 const groupedMateriaux = computed(() => {
   const map = new Map<string, Materiau[]>()
   for (const m of filteredMateriaux.value) {
-    const group = map.get(m.categorie) ?? []
-    map.set(m.categorie, [...group, m])
+    const key = m.categorie || 'Non categorise'
+    const group = map.get(key) ?? []
+    map.set(key, [...group, m])
   }
   return map
 })
