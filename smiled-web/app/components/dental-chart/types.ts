@@ -64,7 +64,7 @@ export interface SchemaInfo {
   id: string
   patient_id: string
   version: number
-  dentition: 'permanente' | 'temporaire' | 'mixte'
+  dentition: 'permanente' | 'lacteale' | 'mixte'
   created_at: string
 }
 
@@ -106,7 +106,7 @@ export interface SchemaVersion {
   id: string
   patient_id: string
   version: number
-  dentition: 'permanente' | 'temporaire' | 'mixte'
+  dentition: 'permanente' | 'lacteale' | 'mixte'
   created_at: string
 }
 

@@ -22,8 +22,8 @@ export function useDentalChart(patientId: Ref<string>) {
       if (res.success && res.data) {
         versions.value = res.data
       }
-    } catch (err) {
-      console.error('Failed to load schema versions:', err)
+    } catch {
+      // Silently fail — versions are non-critical
     }
   }
 
@@ -53,7 +53,7 @@ export function useDentalChart(patientId: Ref<string>) {
     }
   }
 
-  async function createNewVersion(dentition: 'permanente' | 'temporaire' | 'mixte'): Promise<void> {
+  async function createNewVersion(dentition: 'permanente' | 'lacteale' | 'mixte'): Promise<void> {
     loading.value = true
     error.value = null
 
@@ -89,9 +89,8 @@ export function useDentalChart(patientId: Ref<string>) {
         )
         schema.value = { ...schema.value, dents: updatedDents }
       }
-    } catch (err) {
-      console.error(`Failed to update tooth ${fdi}:`, err)
-      throw err
+    } catch {
+      throw new Error(`Erreur lors de la mise à jour de la dent ${fdi}`)
     }
   }
 

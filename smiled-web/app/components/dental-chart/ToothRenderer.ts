@@ -1,6 +1,26 @@
 import type { ToothEntry, ToothGeometry, FaceGeometry, FaceName, FaceState, ToothStatus } from './types'
 import { TOOTH_STATUS_COLORS, FACE_STATE_COLORS } from './types'
-import { GEOMETRY_BY_FDI } from './fdi-geometry'
+import { GEOMETRY_BY_FDI, ALL_TOOTH_GEOMETRIES } from './fdi-geometry'
+
+// OffscreenCanvas background layer cache
+let bgCache: OffscreenCanvas | null = null
+let bgCacheHash = ''
+
+function computeTeethHash(teeth: Map<number, ToothEntry>): string {
+  const parts: string[] = []
+  for (const geo of ALL_TOOTH_GEOMETRIES) {
+    const entry = teeth.get(geo.fdi)
+    if (!entry) {
+      parts.push(`${geo.fdi}:empty`)
+      continue
+    }
+    const facePart = entry.faces
+      .map((f) => `${f.face}=${f.etat}`)
+      .join(',')
+    parts.push(`${geo.fdi}:${entry.tooth.statut}:${entry.tooth.paro_mobilite ?? 0}:${facePart}`)
+  }
+  return parts.join('|')
+}
 
 const BORDER_COLOR = '#374151'
 const SELECTED_BORDER_COLOR = '#2563EB'
@@ -222,4 +242,54 @@ export function drawEmptyTooth(
   ctx.lineWidth = 1
   ctx.strokeRect(geo.x, geo.y, geo.width, geo.height)
   drawFdiLabel(ctx, geo)
+}
+
+/**
+ * Renders the full chart using an OffscreenCanvas background cache.
+ * The background (all 32 teeth) is only redrawn when teeth data changes.
+ * Only the selection highlight is drawn per frame on top of the cached background.
+ */
+export function renderCached(
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  canvasHeight: number,
+  teethMap: Map<number, ToothEntry>,
+  selectedFdi: number | null,
+  selectedFace: FaceName | null,
+): void {
+  const hash = computeTeethHash(teethMap)
+
+  // Rebuild background cache if data changed
+  if (hash !== bgCacheHash || !bgCache) {
+    if (!bgCache || bgCache.width !== canvasWidth || bgCache.height !== canvasHeight) {
+      bgCache = new OffscreenCanvas(canvasWidth, canvasHeight)
+    }
+    const bgCtx = bgCache.getContext('2d')
+    if (!bgCtx) return
+
+    drawChartBackground(bgCtx, canvasWidth, canvasHeight)
+
+    for (const geo of ALL_TOOTH_GEOMETRIES) {
+      const entry = teethMap.get(geo.fdi)
+      if (entry) {
+        drawTooth(bgCtx, entry, false, null)
+      } else {
+        drawEmptyTooth(bgCtx, geo)
+      }
+    }
+
+    bgCacheHash = hash
+  }
+
+  // Draw cached background
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight)
+  ctx.drawImage(bgCache!, 0, 0)
+
+  // Draw selection highlight on top
+  if (selectedFdi !== null) {
+    const entry = teethMap.get(selectedFdi)
+    if (entry) {
+      drawTooth(ctx, entry, true, selectedFace)
+    }
+  }
 }
