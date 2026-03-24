@@ -12,6 +12,11 @@
       </Button>
     </div>
 
+    <!-- Errors -->
+    <Alert v-if="loadError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ loadError }}</AlertDescription>
+    </Alert>
+
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center h-32">
       <Icon name="lucide:loader-2" class="w-8 h-8 animate-spin text-muted-foreground" />
@@ -209,14 +214,17 @@ async function handleSave(): Promise<void> {
   }
 }
 
+const loadError = ref<string | null>(null)
+
 onMounted(async () => {
   try {
     const response = await listTeintes()
     if (response.success && response.data) {
       teintes.value = response.data
     }
-  } catch {
-    // ignore
+  } catch (e) {
+    loadError.value = e instanceof Error ? e.message : 'Erreur lors du chargement des teintes'
+    console.error('Failed to load teintes:', e)
   } finally {
     loading.value = false
   }

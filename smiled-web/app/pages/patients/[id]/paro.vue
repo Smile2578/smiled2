@@ -6,6 +6,22 @@
     </div>
 
     <template v-else>
+      <!-- Auto-save status -->
+      <div class="flex items-center justify-end gap-2 text-sm mb-4">
+        <template v-if="autoSaving">
+          <Icon name="lucide:loader-2" class="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+          <span class="text-muted-foreground">Sauvegarde...</span>
+        </template>
+        <template v-else-if="autoSaveError">
+          <Icon name="lucide:alert-circle" class="w-3.5 h-3.5 text-destructive" />
+          <span class="text-destructive">{{ autoSaveError }}</span>
+        </template>
+        <template v-else-if="autoSaveLastSaved">
+          <Icon name="lucide:check-circle" class="w-3.5 h-3.5 text-green-600" />
+          <span class="text-muted-foreground">Sauvegardé à {{ formatTime(autoSaveLastSaved) }}</span>
+        </template>
+      </div>
+
       <!-- Paro Global Card -->
       <Card class="mb-6">
         <CardHeader>
@@ -123,6 +139,10 @@
 import type { ParoSite, ParoSiteUpdate } from '~/composables/useParo'
 import ParoChart from '~/components/paro/ParoChart.vue'
 
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+}
+
 const route = useRoute()
 const patientId = route.params.id as string
 
@@ -215,4 +235,23 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+// Auto-save for global classification form
+const globalFormData = computed(() => ({ ...globalForm }))
+
+const { saving: autoSaving, lastSavedAt: autoSaveLastSaved, error: autoSaveError } = useAutoSave(
+  globalFormData,
+  async (data) => {
+    if (loading.value) return
+    const payload = {
+      staging: data.staging || null,
+      grading: data.grading || null,
+      indice_plaque_pct: data.indice_plaque_pct,
+      bop_pct: data.bop_pct,
+      notes: data.notes || null,
+    }
+    await updateParoGlobal(patientId, payload)
+  },
+  2000,
+)
 </script>

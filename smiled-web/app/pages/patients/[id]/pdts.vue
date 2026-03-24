@@ -9,6 +9,28 @@
       </Button>
     </div>
 
+    <!-- Errors -->
+    <Alert v-if="loadError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ loadError }}</AlertDescription>
+    </Alert>
+    <Alert v-if="statusError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ statusError }}</AlertDescription>
+    </Alert>
+    <Alert v-if="downloadError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ downloadError }}</AlertDescription>
+    </Alert>
+
+    <!-- Errors -->
+    <Alert v-if="loadError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ loadError }}</AlertDescription>
+    </Alert>
+    <Alert v-if="statusError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ statusError }}</AlertDescription>
+    </Alert>
+    <Alert v-if="downloadError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ downloadError }}</AlertDescription>
+    </Alert>
+
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center h-64">
       <Icon name="lucide:loader-2" class="w-8 h-8 animate-spin text-muted-foreground" />
@@ -278,27 +300,37 @@ async function handleCreate(): Promise<void> {
   }
 }
 
+const statusError = ref<string | null>(null)
+
 async function handleStatusUpdate(pdtId: string, statut: PdtStatus): Promise<void> {
+  statusError.value = null
   try {
     const response = await updatePdt(patientId, pdtId, { statut })
     if (response.success && response.data) {
       pdts.value = pdts.value.map((p) => (p.id === pdtId ? response.data! : p))
     }
-  } catch {
-    // silent
+  } catch (e) {
+    statusError.value = e instanceof Error ? e.message : 'Erreur lors de la mise à jour du statut'
+    console.error('Failed to update PDT status:', e)
   }
 }
 
+const downloadError = ref<string | null>(null)
+
 async function handleDownloadPdf(pdtId: string): Promise<void> {
   downloadingId.value = pdtId
+  downloadError.value = null
   try {
     await downloadPdf(patientId, pdtId)
-  } catch {
-    // silent
+  } catch (e) {
+    downloadError.value = e instanceof Error ? e.message : 'Erreur lors du téléchargement du PDF'
+    console.error('Failed to download PDF:', e)
   } finally {
     downloadingId.value = null
   }
 }
+
+const loadError = ref<string | null>(null)
 
 onMounted(async () => {
   try {
@@ -306,8 +338,9 @@ onMounted(async () => {
     if (response.success && response.data) {
       pdts.value = response.data
     }
-  } catch {
-    // ignore
+  } catch (e) {
+    loadError.value = e instanceof Error ? e.message : 'Erreur lors du chargement des plans'
+    console.error('Failed to load PDTs:', e)
   } finally {
     loading.value = false
   }

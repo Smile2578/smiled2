@@ -1,10 +1,26 @@
 <template>
   <div>
-    <!-- Version info -->
-    <p v-if="questionnaire" class="text-sm text-muted-foreground mb-4">
-      Version {{ questionnaire.version }}
-      · Mis à jour le {{ formatDate(questionnaire.updated_at) }}
-    </p>
+    <!-- Version info + auto-save status -->
+    <div class="flex items-center justify-between mb-4">
+      <p v-if="questionnaire" class="text-sm text-muted-foreground">
+        Version {{ questionnaire.version }}
+        · Mis à jour le {{ formatDate(questionnaire.updated_at) }}
+      </p>
+      <div class="flex items-center gap-2 text-sm">
+        <template v-if="autoSaving">
+          <Icon name="lucide:loader-2" class="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+          <span class="text-muted-foreground">Sauvegarde...</span>
+        </template>
+        <template v-else-if="autoSaveError">
+          <Icon name="lucide:alert-circle" class="w-3.5 h-3.5 text-destructive" />
+          <span class="text-destructive">{{ autoSaveError }}</span>
+        </template>
+        <template v-else-if="autoSaveLastSaved">
+          <Icon name="lucide:check-circle" class="w-3.5 h-3.5 text-green-600" />
+          <span class="text-muted-foreground">Sauvegardé à {{ formatTime(autoSaveLastSaved) }}</span>
+        </template>
+      </div>
+    </div>
 
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center h-64">
@@ -66,12 +82,17 @@
 
 <script setup lang="ts">
 import type { Questionnaire } from '~/types/patient'
+import { formatDate } from '~/utils/format'
 import type { HemosectionData } from '~/components/questionnaire/SectionHemoragique.vue'
 import type { InfectieuxSectionData } from '~/components/questionnaire/SectionInfectieux.vue'
 import type { MedicamenteuxSectionData } from '~/components/questionnaire/SectionMedicamenteux.vue'
 import type { TroublesSectionData } from '~/components/questionnaire/SectionTroubles.vue'
 import type { HabitudesSectionData } from '~/components/questionnaire/SectionHabitudes.vue'
 import type { DentaireSectionData } from '~/components/questionnaire/SectionDentaire.vue'
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+}
 
 const route = useRoute()
 const patientId = route.params.id as string
@@ -141,14 +162,6 @@ const dentaireData = ref<DentaireSectionData>({
   historique_connu: [],
   apprehension: '',
 })
-
-function formatDate(dateStr: string): string {
-  try {
-    return new Date(dateStr).toLocaleDateString('fr-FR')
-  } catch {
-    return dateStr
-  }
-}
 
 function hydrateFromQuestionnaire(q: Questionnaire) {
   form.date_signature = q.date_signature ?? ''
@@ -306,4 +319,30 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+// Auto-save: watch all form data combined into a single computed
+const allFormData = computed(() => ({
+  form: { ...form },
+  hemo: hemoData.value,
+  infectieux: infectieuxData.value,
+  medicamenteux: medicamenteuxData.value,
+  troubles: troublesData.value,
+  habitudes: habitudesData.value,
+  dentaire: dentaireData.value,
+}))
+
+const { saving: autoSaving, lastSavedAt: autoSaveLastSaved, error: autoSaveError } = useAutoSave(
+  allFormData,
+  async () => {
+    if (loading.value) return
+    const payload = buildPayload()
+    const response = await saveQuestionnaire(patientId, payload)
+    if (response.success && response.data) {
+      questionnaire.value = response.data
+    } else if (response.error) {
+      throw new Error(response.error)
+    }
+  },
+  2000,
+)
 </script>

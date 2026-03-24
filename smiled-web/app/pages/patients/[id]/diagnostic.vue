@@ -11,6 +11,11 @@
       </Button>
     </div>
 
+    <!-- Load error -->
+    <Alert v-if="loadError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ loadError }}</AlertDescription>
+    </Alert>
+
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center h-64">
       <Icon name="lucide:loader-2" class="w-8 h-8 animate-spin text-muted-foreground" />
@@ -218,6 +223,7 @@ const showNewDialog = ref(false)
 const creating = ref(false)
 const createError = ref<string | null>(null)
 const expanded = ref<Set<string>>(new Set())
+const loadError = ref<string | null>(null)
 
 const form = reactive({
   titre: '',
@@ -262,8 +268,9 @@ async function fetchDiagnostics(): Promise<void> {
     if (response.success && response.data) {
       diagnostics.value = response.data
     }
-  } catch {
-    // ignore
+  } catch (e) {
+    loadError.value = e instanceof Error ? e.message : 'Erreur lors du chargement des diagnostics'
+    console.error('Failed to load diagnostics:', e)
   } finally {
     loading.value = false
   }

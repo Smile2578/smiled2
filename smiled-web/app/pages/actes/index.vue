@@ -37,6 +37,28 @@
       </Select>
     </div>
 
+    <!-- Errors -->
+    <Alert v-if="loadError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ loadError }}</AlertDescription>
+    </Alert>
+    <Alert v-if="tarifError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ tarifError }}</AlertDescription>
+    </Alert>
+    <Alert v-if="toggleError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ toggleError }}</AlertDescription>
+    </Alert>
+
+    <!-- Errors -->
+    <Alert v-if="loadError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ loadError }}</AlertDescription>
+    </Alert>
+    <Alert v-if="tarifError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ tarifError }}</AlertDescription>
+    </Alert>
+    <Alert v-if="toggleError" variant="destructive" class="mb-4">
+      <AlertDescription>{{ toggleError }}</AlertDescription>
+    </Alert>
+
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center h-32">
       <Icon name="lucide:loader-2" class="w-8 h-8 animate-spin text-muted-foreground" />
@@ -192,6 +214,7 @@
 
 <script setup lang="ts">
 import type { Acte, Nomenclature } from '~/composables/useActe'
+import { formatPrice } from '~/utils/format'
 
 definePageMeta({ layout: 'default' })
 
@@ -246,10 +269,6 @@ function nomenclatureBadge(n: Nomenclature): 'default' | 'secondary' | 'outline'
   return variants[n] ?? 'outline'
 }
 
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price)
-}
-
 function startTarifEdit(id: string, current: number | null): void {
   editingTarifId.value = id
   editingTarifValue.value = current ?? 0
@@ -259,27 +278,35 @@ function cancelTarifEdit(): void {
   editingTarifId.value = null
 }
 
+const tarifError = ref<string | null>(null)
+
 async function saveTarif(id: string): Promise<void> {
+  tarifError.value = null
   try {
     const response = await updateTarifActe(id, editingTarifValue.value)
     if (response.success && response.data) {
       actes.value = actes.value.map((a) => (a.id === id ? response.data! : a))
     }
-  } catch {
-    // silent
+  } catch (e) {
+    tarifError.value = e instanceof Error ? e.message : 'Erreur lors de la mise à jour du tarif'
+    console.error('Failed to save tarif:', e)
   } finally {
     editingTarifId.value = null
   }
 }
 
+const toggleError = ref<string | null>(null)
+
 async function handleToggle(id: string): Promise<void> {
+  toggleError.value = null
   try {
     const response = await toggleActe(id)
     if (response.success && response.data) {
       actes.value = actes.value.map((a) => (a.id === id ? response.data! : a))
     }
-  } catch {
-    // silent
+  } catch (e) {
+    toggleError.value = e instanceof Error ? e.message : 'Erreur lors du changement de statut'
+    console.error('Failed to toggle acte:', e)
   }
 }
 
@@ -317,14 +344,17 @@ async function handleCreate(): Promise<void> {
   }
 }
 
+const loadError = ref<string | null>(null)
+
 onMounted(async () => {
   try {
     const response = await listActes()
     if (response.success && response.data) {
       actes.value = response.data
     }
-  } catch {
-    // ignore
+  } catch (e) {
+    loadError.value = e instanceof Error ? e.message : 'Erreur lors du chargement des actes'
+    console.error('Failed to load actes:', e)
   } finally {
     loading.value = false
   }
