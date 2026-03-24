@@ -58,9 +58,35 @@
       <div class="grid grid-cols-2 gap-3">
         <div class="col-span-2 space-y-1">
           <Label class="text-xs">Libellé de l'acte *</Label>
-          <div class="flex gap-2">
-            <Input v-model="newLine.acte_libelle" placeholder="Ex : Composite, Extraction..." class="flex-1" />
-            <Input v-model="newLine.acte_code" placeholder="Code" class="w-28" />
+          <div class="relative">
+            <div class="flex gap-2">
+              <Input
+                v-model="acteSearch"
+                placeholder="Rechercher un acte (code ou libellé)..."
+                class="flex-1"
+                @focus="showActeDropdown = true"
+                @input="showActeDropdown = true"
+              />
+              <Input v-model="newLine.acte_code" placeholder="Code" class="w-28" readonly />
+            </div>
+            <div
+              v-if="showActeDropdown && filteredActes.length > 0"
+              class="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-md border bg-popover shadow-md"
+            >
+              <button
+                v-for="acte in filteredActes"
+                :key="acte.id"
+                type="button"
+                class="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-accent text-left"
+                @mousedown.prevent="selectActe(acte)"
+              >
+                <span class="truncate">
+                  <span v-if="acte.code" class="font-mono text-xs text-muted-foreground mr-2">{{ acte.code }}</span>
+                  {{ acte.libelle }}
+                </span>
+                <span class="text-xs text-muted-foreground shrink-0 ml-2">{{ formatPrice(acte.prix_cabinet ?? acte.prix_defaut) }}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -143,6 +169,7 @@
 
 <script setup lang="ts">
 import type { CreatePdtLineInput } from '~/composables/usePdt'
+import type { Acte } from '~/composables/useActe'
 
 const FACES = ['M', 'O', 'D', 'V', 'L'] as const
 
@@ -153,6 +180,48 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update', lines: CreatePdtLineInput[]): void
 }>()
+
+// Actes autocomplete
+const { listActes } = useActe()
+const allActes = ref<Acte[]>([])
+const acteSearch = ref('')
+const showActeDropdown = ref(false)
+
+const filteredActes = computed(() => {
+  const q = acteSearch.value.toLowerCase().trim()
+  if (!q) return allActes.value.filter(a => a.actif).slice(0, 20)
+  return allActes.value
+    .filter(a => a.actif && (
+      a.libelle.toLowerCase().includes(q) ||
+      (a.code && a.code.toLowerCase().includes(q))
+    ))
+    .slice(0, 20)
+})
+
+function selectActe(acte: Acte) {
+  newLine.acte_id = acte.id
+  newLine.acte_code = acte.code ?? ''
+  newLine.acte_libelle = acte.libelle
+  newLine.prix_unitaire = acte.prix_cabinet ?? acte.prix_defaut
+  acteSearch.value = acte.libelle
+  showActeDropdown.value = false
+}
+
+// Close dropdown on click outside
+if (import.meta.client) {
+  const handleClickOutside = () => { showActeDropdown.value = false }
+  onMounted(() => document.addEventListener('click', handleClickOutside))
+  onUnmounted(() => document.removeEventListener('click', handleClickOutside))
+}
+
+onMounted(async () => {
+  try {
+    const res = await listActes()
+    if (res.success && res.data) allActes.value = res.data
+  } catch {
+    // Actes list unavailable — manual input still works
+  }
+})
 
 const newLine = reactive({
   acte_libelle: '',
@@ -169,7 +238,10 @@ const newLine = reactive({
   notes: '',
 })
 
-const canAddLine = computed(() => newLine.acte_libelle.trim().length > 0 && newLine.prix_unitaire >= 0)
+const canAddLine = computed(() => {
+  const hasLibelle = newLine.acte_libelle.trim().length > 0 || acteSearch.value.trim().length > 0
+  return hasLibelle && newLine.prix_unitaire >= 0
+})
 
 const totalPrice = computed(() =>
   props.lines.reduce((sum, l) => sum + l.prix_unitaire * l.quantite, 0),
@@ -178,9 +250,11 @@ const totalPrice = computed(() =>
 function addLine(): void {
   if (!canAddLine.value) return
 
+  const libelle = newLine.acte_libelle.trim() || acteSearch.value.trim()
+
   const line: CreatePdtLineInput = {
     acte_id: newLine.acte_id,
-    acte_libelle: newLine.acte_libelle.trim(),
+    acte_libelle: libelle,
     acte_code: newLine.acte_code || null,
     dent_fdi: newLine.dent_fdi,
     faces: newLine.faces.length > 0 ? [...newLine.faces] : null,
@@ -194,6 +268,7 @@ function addLine(): void {
   emit('update', [...props.lines, line])
 
   // Reset form
+  acteSearch.value = ''
   newLine.acte_libelle = ''
   newLine.acte_code = ''
   newLine.acte_id = null

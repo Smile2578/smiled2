@@ -10,37 +10,50 @@
 
       <!-- Navigation -->
       <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
-        <p class="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider px-3 mb-2">
-          Clinique
-        </p>
-        <NuxtLink to="/patients" class="sidebar-link">
-          <Icon name="lucide:users" class="w-4 h-4" />
-          <span>Patients</span>
-        </NuxtLink>
+        <template v-if="canSeeClinical">
+          <p class="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider px-3 mb-2">
+            Clinique
+          </p>
+          <NuxtLink to="/patients" class="sidebar-link">
+            <Icon name="lucide:users" class="w-4 h-4" />
+            <span>Patients</span>
+          </NuxtLink>
+        </template>
 
-        <p class="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider px-3 mt-6 mb-2">
-          Administration
-        </p>
-        <NuxtLink to="/actes" class="sidebar-link">
-          <Icon name="lucide:clipboard-list" class="w-4 h-4" />
-          <span>Actes</span>
-        </NuxtLink>
-        <NuxtLink to="/materiaux" class="sidebar-link">
-          <Icon name="lucide:flask-conical" class="w-4 h-4" />
-          <span>Matériaux</span>
-        </NuxtLink>
-        <NuxtLink to="/teintes" class="sidebar-link">
-          <Icon name="lucide:palette" class="w-4 h-4" />
-          <span>Teintes</span>
-        </NuxtLink>
+        <template v-if="canSeeAdmin">
+          <p class="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider px-3 mt-6 mb-2">
+            Administration
+          </p>
+          <NuxtLink to="/actes" class="sidebar-link">
+            <Icon name="lucide:clipboard-list" class="w-4 h-4" />
+            <span>Actes</span>
+          </NuxtLink>
+          <NuxtLink to="/materiaux" class="sidebar-link">
+            <Icon name="lucide:flask-conical" class="w-4 h-4" />
+            <span>Matériaux</span>
+          </NuxtLink>
+          <NuxtLink to="/teintes" class="sidebar-link">
+            <Icon name="lucide:palette" class="w-4 h-4" />
+            <span>Teintes</span>
+          </NuxtLink>
+        </template>
 
-        <p class="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider px-3 mt-6 mb-2">
-          Paramètres
-        </p>
-        <NuxtLink to="/cabinet" class="sidebar-link">
-          <Icon name="lucide:building-2" class="w-4 h-4" />
-          <span>Cabinet</span>
-        </NuxtLink>
+        <template v-if="canSeeAdmin">
+          <p class="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider px-3 mt-6 mb-2">
+            Paramètres
+          </p>
+          <NuxtLink to="/cabinet" class="sidebar-link">
+            <Icon name="lucide:building-2" class="w-4 h-4" />
+            <span>Cabinet</span>
+          </NuxtLink>
+        </template>
+
+        <template v-if="canSeeAudit">
+          <NuxtLink to="/audit" class="sidebar-link mt-1">
+            <Icon name="lucide:scroll-text" class="w-4 h-4" />
+            <span>Journal d'audit</span>
+          </NuxtLink>
+        </template>
       </nav>
 
       <!-- User info at bottom -->
@@ -73,6 +86,27 @@
 
 <script setup lang="ts">
 const authStore = useAuthStore()
+const { hasPermission, loadPermissions } = usePermissions()
+
+// Load permissions on mount (non-blocking, graceful if endpoint missing)
+onMounted(() => { loadPermissions() })
+
+// RBAC visibility: show everything when no permissions loaded (endpoint not ready yet)
+const permissionsLoaded = computed(() => usePermissions().permissions.value.length > 0)
+
+const canSeeClinical = computed(() =>
+  !permissionsLoaded.value || hasPermission('patient.read_admin') || hasPermission('patient.read_clinical'),
+)
+
+const canSeeAdmin = computed(() =>
+  !permissionsLoaded.value || hasPermission('settings.cabinet') || hasPermission('settings.manage'),
+)
+
+const canSeeAudit = computed(() => {
+  const role = authStore.user?.role
+  if (!permissionsLoaded.value) return role === 'titulaire' || role === 'admin'
+  return role === 'titulaire' || role === 'admin'
+})
 
 const userName = computed(() => {
   const user = authStore.user
@@ -92,7 +126,15 @@ const userRoleLabel = computed(() => {
     associe: 'Associé',
     collaborateur: 'Collaborateur',
     remplacant: 'Remplaçant',
-    assistant: 'Assistant',
+    specialiste_odf: 'Spécialiste ODF',
+    specialiste_co: 'Spécialiste CO',
+    specialiste_mbd: 'Spécialiste MBD',
+    assistant: 'Assistant(e)',
+    assistant_formation: 'Assistant(e) en formation',
+    aspbd: 'ASPBD',
+    secretaire: 'Secrétaire',
+    comptable: 'Comptable',
+    prothesiste: 'Prothésiste',
     admin: 'Administrateur',
   }
   return roleMap[authStore.user?.role ?? ''] ?? authStore.user?.role ?? ''

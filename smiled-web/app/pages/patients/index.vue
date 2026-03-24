@@ -115,10 +115,12 @@
             <div class="space-y-2">
               <Label for="nom">Nom *</Label>
               <Input id="nom" v-model="form.nom" required placeholder="DUPONT" />
+              <p v-if="fieldErrors.nom" class="text-xs text-destructive">{{ fieldErrors.nom }}</p>
             </div>
             <div class="space-y-2">
               <Label for="prenom">Prénom *</Label>
               <Input id="prenom" v-model="form.prenom" required placeholder="Jean" />
+              <p v-if="fieldErrors.prenom" class="text-xs text-destructive">{{ fieldErrors.prenom }}</p>
             </div>
           </div>
 
@@ -138,6 +140,7 @@
                   <SelectItem value="F">Féminin</SelectItem>
                 </SelectContent>
               </Select>
+              <p v-if="fieldErrors.sexe" class="text-xs text-destructive">{{ fieldErrors.sexe }}</p>
             </div>
           </div>
 
@@ -145,6 +148,7 @@
             <div class="space-y-2">
               <Label for="date_naissance">Date de naissance *</Label>
               <Input id="date_naissance" v-model="form.date_naissance" type="date" required />
+              <p v-if="fieldErrors.date_naissance" class="text-xs text-destructive">{{ fieldErrors.date_naissance }}</p>
             </div>
             <div class="space-y-2">
               <Label for="couverture">Couverture *</Label>
@@ -159,6 +163,7 @@
                   <SelectItem value="aucune">Aucune</SelectItem>
                 </SelectContent>
               </Select>
+              <p v-if="fieldErrors.couverture" class="text-xs text-destructive">{{ fieldErrors.couverture }}</p>
             </div>
           </div>
 
@@ -193,7 +198,17 @@
 </template>
 
 <script setup lang="ts">
+import { z } from 'zod'
 import type { Patient } from '~/types/patient'
+import { couvertureLabel, couvertureBadgeVariant } from '~/utils/display'
+
+const patientSchema = z.object({
+  nom: z.string().min(1, 'Le nom est requis'),
+  prenom: z.string().min(1, 'Le prénom est requis'),
+  date_naissance: z.string().min(1, 'La date de naissance est requise'),
+  sexe: z.enum(['M', 'F'], { required_error: 'Le sexe est requis' }),
+  couverture: z.enum(['mutuelle', 'cmu_c2s', 'ame', 'aucune'], { required_error: 'La couverture est requise' }),
+})
 
 const { listPatients, createPatient } = usePatient()
 const router = useRouter()
@@ -208,6 +223,7 @@ const searchQuery = ref('')
 const showCreateDialog = ref(false)
 const creating = ref(false)
 const createError = ref<string | null>(null)
+const fieldErrors = ref<Record<string, string>>({})
 
 const totalPages = computed(() =>
   totalPatients.value !== null ? Math.ceil(totalPatients.value / pageLimit) : 1,
@@ -251,18 +267,35 @@ async function fetchPatients() {
 }
 
 async function handleCreate() {
-  if (!form.sexe || !form.couverture) return
-  creating.value = true
+  fieldErrors.value = {}
   createError.value = null
+
+  const result = patientSchema.safeParse({
+    nom: form.nom,
+    prenom: form.prenom,
+    date_naissance: form.date_naissance,
+    sexe: form.sexe || undefined,
+    couverture: form.couverture || undefined,
+  })
+
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const field = issue.path[0] as string
+      if (!fieldErrors.value[field]) fieldErrors.value[field] = issue.message
+    }
+    return
+  }
+
+  creating.value = true
 
   try {
     const response = await createPatient({
-      nom: form.nom,
+      nom: result.data.nom,
       nom_naissance: form.nom_naissance || null,
-      prenom: form.prenom,
-      sexe: form.sexe as 'M' | 'F',
-      date_naissance: form.date_naissance,
-      couverture: form.couverture as 'mutuelle' | 'cmu_c2s' | 'ame' | 'aucune',
+      prenom: result.data.prenom,
+      sexe: result.data.sexe,
+      date_naissance: result.data.date_naissance,
+      couverture: result.data.couverture,
       telephone: form.telephone || null,
       email: form.email || null,
     })
@@ -286,26 +319,6 @@ function formatDate(dateStr: string): string {
   } catch {
     return dateStr
   }
-}
-
-function couvertureLabel(couverture: string): string {
-  const labels: Record<string, string> = {
-    mutuelle: 'Mutuelle',
-    cmu_c2s: 'CMU / C2S',
-    ame: 'AME',
-    aucune: 'Aucune',
-  }
-  return labels[couverture] ?? couverture
-}
-
-function couvertureBadgeVariant(couverture: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-  const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-    mutuelle: 'default',
-    cmu_c2s: 'secondary',
-    ame: 'secondary',
-    aucune: 'outline',
-  }
-  return variants[couverture] ?? 'outline'
 }
 
 watch([debouncedSearch, currentPage], fetchPatients, { immediate: true })

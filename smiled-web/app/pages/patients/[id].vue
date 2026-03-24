@@ -37,6 +37,23 @@
         </div>
       </div>
 
+      <!-- Medical Alert Banner -->
+      <div
+        v-if="medicalAlerts.length > 0"
+        class="mb-6 flex items-center gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800"
+      >
+        <Icon name="lucide:alert-triangle" class="w-5 h-5 shrink-0" />
+        <div class="flex flex-wrap items-center gap-2 text-sm font-medium">
+          <span
+            v-for="alert in medicalAlerts"
+            :key="alert"
+            class="rounded-full bg-amber-200/60 px-2.5 py-0.5 text-xs font-semibold"
+          >
+            {{ alert }}
+          </span>
+        </div>
+      </div>
+
       <!-- Tab navigation -->
       <nav class="flex gap-1 border-b mb-6">
         <NuxtLink
@@ -58,17 +75,44 @@
 </template>
 
 <script setup lang="ts">
-import type { Patient } from '~/types/patient'
+import type { Patient, Questionnaire } from '~/types/patient'
 import { formatDate } from '~/utils/format'
+import { couvertureLabel, couvertureBadgeVariant } from '~/utils/display'
 
 const route = useRoute()
 const patientId = computed(() => route.params.id as string)
 
-const { getPatient } = usePatient()
+const { getPatient, getQuestionnaire } = usePatient()
 
 const patient = ref<Patient | null>(null)
+const questionnaire = ref<Questionnaire | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
+
+const medicalAlerts = computed(() => {
+  const q = questionnaire.value
+  if (!q) return []
+  const alerts: string[] = []
+
+  const avk = q.avk as { actif?: boolean } | null
+  if (avk?.actif) alerts.push('AVK')
+
+  const endocardite = q.endocardite as { actif?: boolean } | null
+  if (endocardite?.actif) alerts.push('Endocardite')
+
+  const bisphos = q.bisphosphonates as { actif?: boolean } | null
+  if (bisphos?.actif) alerts.push('Bisphosphonates')
+
+  const allergies = q.allergies as { actif?: boolean; detail?: string } | null
+  if (allergies?.actif) {
+    alerts.push(allergies.detail ? `Allergies : ${allergies.detail}` : 'Allergies')
+  }
+
+  const radio = q.radiotherapie as { actif?: boolean } | null
+  if (radio?.actif) alerts.push('Radiothérapie')
+
+  return alerts
+})
 
 const tabs = computed(() => [
   { to: `/patients/${patientId.value}`, label: 'Fiche', exact: true },
@@ -100,26 +144,6 @@ function isTabActive(tab: { to: string; exact: boolean }): boolean {
   return route.path.startsWith(tab.to)
 }
 
-function couvertureLabel(couverture: string): string {
-  const labels: Record<string, string> = {
-    mutuelle: 'Mutuelle',
-    cmu_c2s: 'CMU / C2S',
-    ame: 'AME',
-    aucune: 'Aucune',
-  }
-  return labels[couverture] ?? couverture
-}
-
-function couvertureBadgeVariant(couverture: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-  const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-    mutuelle: 'default',
-    cmu_c2s: 'secondary',
-    ame: 'secondary',
-    aucune: 'outline',
-  }
-  return variants[couverture] ?? 'outline'
-}
-
 provide('patient', patient)
 
 onMounted(async () => {
@@ -134,6 +158,16 @@ onMounted(async () => {
     error.value = err instanceof Error ? err.message : 'Erreur lors du chargement'
   } finally {
     loading.value = false
+  }
+
+  // Load questionnaire for medical alerts (non-blocking)
+  try {
+    const qRes = await getQuestionnaire(patientId.value)
+    if (qRes.success && qRes.data) {
+      questionnaire.value = qRes.data
+    }
+  } catch {
+    // Questionnaire may not exist yet — no alert to show
   }
 })
 </script>

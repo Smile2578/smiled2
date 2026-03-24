@@ -16,10 +16,12 @@
             <div class="space-y-2">
               <Label for="nom">Nom</Label>
               <Input id="nom" v-model="editForm.nom" :disabled="!editing" />
+              <p v-if="fieldErrors.nom" class="text-xs text-destructive">{{ fieldErrors.nom }}</p>
             </div>
             <div class="space-y-2">
               <Label for="prenom">Prénom</Label>
               <Input id="prenom" v-model="editForm.prenom" :disabled="!editing" />
+              <p v-if="fieldErrors.prenom" class="text-xs text-destructive">{{ fieldErrors.prenom }}</p>
             </div>
             <div class="space-y-2">
               <Label for="nom_naissance">Nom de naissance</Label>
@@ -40,6 +42,7 @@
             <div class="space-y-2">
               <Label for="date_naissance">Date de naissance</Label>
               <Input id="date_naissance" v-model="editForm.date_naissance" type="date" :disabled="!editing" />
+              <p v-if="fieldErrors.date_naissance" class="text-xs text-destructive">{{ fieldErrors.date_naissance }}</p>
             </div>
             <div class="space-y-2">
               <Label for="num_ss">N° Sécurité Sociale</Label>
@@ -172,18 +175,29 @@
 </template>
 
 <script setup lang="ts">
+import { z } from 'zod'
 import type { Patient } from '~/types/patient'
+
+const patientSchema = z.object({
+  nom: z.string().min(1, 'Le nom est requis'),
+  prenom: z.string().min(1, 'Le prénom est requis'),
+  date_naissance: z.string().min(1, 'La date de naissance est requise'),
+  sexe: z.enum(['M', 'F'], { required_error: 'Le sexe est requis' }),
+  couverture: z.enum(['mutuelle', 'cmu_c2s', 'ame', 'aucune'], { required_error: 'La couverture est requise' }),
+})
 
 const route = useRoute()
 const patientId = route.params.id as string
 
-const { getPatient, updatePatient } = usePatient()
+const { updatePatient } = usePatient()
 
-const patient = ref<Patient | null>(null)
-const loading = ref(true)
+const injectedPatient = inject<Ref<Patient | null>>('patient', ref(null))
+const patient = injectedPatient
+const loading = computed(() => patient.value === null)
 const editing = ref(false)
 const saving = ref(false)
 const saveError = ref<string | null>(null)
+const fieldErrors = ref<Record<string, string>>({})
 
 const editForm = reactive({
   nom: '',
@@ -231,11 +245,30 @@ function cancelEditing() {
   if (patient.value) syncFormFromPatient(patient.value)
   editing.value = false
   saveError.value = null
+  fieldErrors.value = {}
 }
 
 async function handleSave() {
-  saving.value = true
+  fieldErrors.value = {}
   saveError.value = null
+
+  const result = patientSchema.safeParse({
+    nom: editForm.nom,
+    prenom: editForm.prenom,
+    date_naissance: editForm.date_naissance,
+    sexe: editForm.sexe || undefined,
+    couverture: editForm.couverture || undefined,
+  })
+
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      const field = issue.path[0] as string
+      if (!fieldErrors.value[field]) fieldErrors.value[field] = issue.message
+    }
+    return
+  }
+
+  saving.value = true
 
   try {
     const response = await updatePatient(patientId, {
@@ -273,17 +306,8 @@ async function handleSave() {
   }
 }
 
-onMounted(async () => {
-  try {
-    const response = await getPatient(patientId)
-    if (response.success && response.data) {
-      patient.value = response.data
-      syncFormFromPatient(response.data)
-    }
-  } catch {
-    // Parent handles the error display
-  } finally {
-    loading.value = false
-  }
-})
+// Sync form when the injected patient becomes available
+watch(patient, (p) => {
+  if (p) syncFormFromPatient(p)
+}, { immediate: true })
 </script>
