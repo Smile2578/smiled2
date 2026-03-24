@@ -5,8 +5,6 @@ use thiserror::Error;
 #[derive(Debug, Clone)]
 pub struct Config {
     pub database_url: String,
-    pub jwt_secret: String,
-    pub jwt_expiry_hours: u64,
     pub s3_endpoint: String,
     pub s3_bucket: String,
     pub s3_access_key: String,
@@ -56,15 +54,6 @@ impl Config {
         let _ = dotenvy::dotenv();
 
         let database_url = require_var("DATABASE_URL")?;
-        let jwt_secret = require_var("JWT_SECRET")?;
-
-        let jwt_expiry_hours = optional_var("JWT_EXPIRY_HOURS")
-            .unwrap_or_else(|| "24".to_string())
-            .parse::<u64>()
-            .map_err(|_| ConfigError::InvalidValue {
-                var: "JWT_EXPIRY_HOURS".to_string(),
-                reason: "must be a positive integer".to_string(),
-            })?;
 
         let s3_endpoint = optional_var("S3_ENDPOINT")
             .unwrap_or_else(|| "http://localhost:9000".to_string());
@@ -132,8 +121,6 @@ impl Config {
 
         Ok(Config {
             database_url,
-            jwt_secret,
-            jwt_expiry_hours,
             s3_endpoint,
             s3_bucket,
             s3_access_key,

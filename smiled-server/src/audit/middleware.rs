@@ -8,13 +8,13 @@ use axum::{
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::state::AppState;
+use crate::{auth::middleware::extract_session_token, state::AppState};
 
 /// Tower middleware that logs mutating requests (POST/PUT/PATCH/DELETE) to the
 /// `audit_log` table after the response has been produced.
 ///
 /// The INSERT is fire-and-forget (`tokio::spawn`) so it never blocks the
-/// response. Public routes (no valid JWT) are silently skipped.
+/// response. Public routes (no valid session) are silently skipped.
 pub async fn audit_layer(
     State(state): State<AppState>,
     request: Request<Body>,
@@ -29,10 +29,13 @@ pub async fn audit_layer(
         .unwrap_or("")
         .to_string();
 
-    // Try to extract auth info from the request extensions (set by AuthUser extractor
-    // in upstream handlers). At this layer we cannot run the extractor ourselves without
-    // consuming the body, so we parse the JWT manually from headers/cookies.
-    let auth_info = extract_auth_info(&request, &state);
+    // Extract the session token from the cookie header (non-blocking parse).
+    // Actual session validation happens asynchronously after the response.
+    let session_token = request
+        .headers()
+        .get(axum::http::header::COOKIE)
+        .and_then(|v| v.to_str().ok())
+        .and_then(extract_session_token);
 
     let response = next.run(request).await;
 
@@ -42,21 +45,11 @@ pub async fn audit_layer(
     let is_success = (200..300).contains(&(status as usize));
 
     if is_mutation && is_success {
-        if let Some((user_id, cabinet_id)) = auth_info {
+        if let Some(token) = session_token {
             let pool = state.pool.clone();
             let action = format!("{method} {path}");
             tokio::spawn(async move {
-                insert_audit_entry(
-                    &pool,
-                    cabinet_id,
-                    user_id,
-                    &action,
-                    &method,
-                    &path,
-                    status as i32,
-                    &request_id,
-                )
-                .await;
+                resolve_and_insert_audit(&pool, &token, &action, &method, &path, status as i32, &request_id).await;
             });
         }
     }
@@ -64,45 +57,33 @@ pub async fn audit_layer(
     response
 }
 
-/// Parse JWT from cookie or Authorization header without consuming the request.
-fn extract_auth_info(request: &Request<Body>, state: &AppState) -> Option<(Uuid, Uuid)> {
-    let token = extract_token_from_cookie(request)
-        .or_else(|| extract_token_from_header(request))?;
+/// Validate the session token and insert an audit log entry.
+/// Errors are logged but never propagated.
+async fn resolve_and_insert_audit(
+    pool: &PgPool,
+    session_token: &str,
+    action: &str,
+    method: &str,
+    path: &str,
+    status_code: i32,
+    request_id: &str,
+) {
+    let session = match crate::auth::session::validate_session(pool, session_token).await {
+        Ok(s) => s,
+        Err(_) => return, // Invalid/expired session — skip audit silently
+    };
 
-    let token_data =
-        crate::auth::jwt::validate_token(&token, &state.config.jwt_secret).ok()?;
-
-    if token_data.claims.token_type != "access" {
-        return None;
-    }
-
-    let user_id = Uuid::parse_str(&token_data.claims.sub).ok()?;
-    let cabinet_id = Uuid::parse_str(&token_data.claims.cabinet_id).ok()?;
-
-    Some((user_id, cabinet_id))
-}
-
-fn extract_token_from_cookie(request: &Request<Body>) -> Option<String> {
-    let cookie_header = request.headers().get(axum::http::header::COOKIE)?;
-    let cookie_str = cookie_header.to_str().ok()?;
-    cookie_str.split(';').find_map(|pair| {
-        let pair = pair.trim();
-        let (name, value) = pair.split_once('=')?;
-        if name.trim() == "access_token" {
-            Some(value.trim().to_string())
-        } else {
-            None
-        }
-    })
-}
-
-fn extract_token_from_header(request: &Request<Body>) -> Option<String> {
-    let auth_header = request
-        .headers()
-        .get(axum::http::header::AUTHORIZATION)?
-        .to_str()
-        .ok()?;
-    auth_header.strip_prefix("Bearer ").map(|t| t.to_string())
+    insert_audit_entry(
+        pool,
+        session.cabinet_id,
+        session.user_id,
+        action,
+        method,
+        path,
+        status_code,
+        request_id,
+    )
+    .await;
 }
 
 /// Fire-and-forget INSERT. Errors are logged but never propagated.

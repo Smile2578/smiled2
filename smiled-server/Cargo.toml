@@ -41,8 +41,9 @@ bigdecimal = { version = "0.4", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
-# Authentication
-jsonwebtoken = "9"
+# Authentication is handled by Better Auth (Nuxt side).
+# Rust only validates sessions via DB queries — no JWT/password crates needed.
+# argon2 is kept temporarily for seed_demo.rs (TODO: remove when seed_demo is updated)
 argon2 = "0.5"
 
 # Validation
@@ -56,9 +57,6 @@ chrono = { version = "0.4", features = ["serde"] }
 
 # Caching
 moka = { version = "0.12", features = ["future"] }
-
-# Email (default-features disabled to avoid native-tls conflict; rustls used)
-lettre = { version = "0.11", default-features = false, features = ["tokio1-rustls-tls", "smtp-transport", "builder", "hostname", "tracing"] }
 
 # S3/MinIO
 aws-sdk-s3 = "1"

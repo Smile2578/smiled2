@@ -1,5 +1,3 @@
-pub mod auth;
-
 use axum::{routing::get, Router};
 
 use crate::{
@@ -13,8 +11,7 @@ use crate::{
 pub fn router() -> Router<AppState> {
     Router::new().nest(
         "/api/v1",
-        auth::router()
-            .merge(patient::router())
+        patient::router()
             .merge(acte::router())
             .merge(materiau::router())
             .merge(reference::router())
