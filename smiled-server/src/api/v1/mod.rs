@@ -1,9 +1,10 @@
 pub mod auth;
 
-use axum::Router;
+use axum::{routing::get, Router};
 
 use crate::{
-    core::{acte, diagnostic, document, materiau, patient, pdt, schema_dentaire},
+    audit::handlers::list_audit_log_handler,
+    core::{acte, cabinet, diagnostic, document, materiau, patient, pdt, prothese, schema_dentaire},
     reference,
     state::AppState,
 };
@@ -20,6 +21,9 @@ pub fn router() -> Router<AppState> {
             .merge(schema_dentaire::router())
             .merge(diagnostic::router())
             .merge(pdt::router())
-            .merge(document::router()),
+            .merge(document::router())
+            .merge(cabinet::router())
+            .merge(prothese::router())
+            .route("/audit-log", get(list_audit_log_handler)),
     )
 }
