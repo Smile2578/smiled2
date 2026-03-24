@@ -150,8 +150,8 @@
 </template>
 
 <script setup lang="ts">
-import type { ToothEntry, ToothStatus, FaceName, FaceState } from './types'
-import { TOOTH_STATUS_LABELS, FACE_STATE_LABELS, FACE_LABELS } from './types'
+import type { ToothEntry, ToothStatus, FaceName, FaceState } from './dentalChartTypes'
+import { TOOTH_STATUS_LABELS, FACE_STATE_LABELS, FACE_LABELS } from './dentalChartTypes'
 
 interface Props {
   selectedEntry: ToothEntry | null

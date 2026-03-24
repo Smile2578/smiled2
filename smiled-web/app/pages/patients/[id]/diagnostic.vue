@@ -1,84 +1,110 @@
 <template>
   <div>
-    <!-- Actions bar -->
-    <div class="flex items-center justify-between mb-6">
-      <p class="text-sm text-muted-foreground">
-        {{ diagnostics.length }} diagnostic{{ diagnostics.length !== 1 ? 's' : '' }}
-      </p>
-      <Button @click="showNewDialog = true">
-        <Icon name="lucide:plus" class="w-4 h-4 mr-2" />
+    <!-- Header -->
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-semibold text-foreground">Diagnostics</h2>
+        <p class="text-sm text-muted-foreground">
+          {{ diagnostics.length }} diagnostic{{ diagnostics.length !== 1 ? 's' : '' }}
+        </p>
+      </div>
+      <Button
+        class="bg-primary hover:bg-primary/90 text-primary-foreground"
+        @click="showNewDialog = true"
+      >
+        <Icon name="lucide:plus" class="mr-2 h-4 w-4" />
         Nouveau diagnostic
       </Button>
     </div>
 
-    <!-- Load error -->
+    <!-- Error -->
     <Alert v-if="loadError" variant="destructive" class="mb-4">
       <AlertDescription>{{ loadError }}</AlertDescription>
     </Alert>
 
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center h-64">
-      <Icon name="lucide:loader-2" class="w-8 h-8 animate-spin text-muted-foreground" />
+    <!-- Loading skeleton -->
+    <div v-if="loading" class="space-y-4">
+      <Card v-for="i in 3" :key="i">
+        <CardHeader>
+          <div class="flex items-center justify-between">
+            <div class="space-y-2">
+              <Skeleton class="h-5 w-40" />
+              <Skeleton class="h-4 w-28" />
+            </div>
+            <Skeleton class="h-4 w-4" />
+          </div>
+        </CardHeader>
+      </Card>
     </div>
 
-    <!-- Empty -->
-    <div v-else-if="diagnostics.length === 0" class="text-center py-16 text-muted-foreground">
-      <Icon name="lucide:clipboard-x" class="w-12 h-12 mx-auto mb-3 opacity-30" />
-      <p class="text-base">Aucun diagnostic enregistré</p>
-      <Button class="mt-4" variant="outline" @click="showNewDialog = true">
-        Créer le premier diagnostic
+    <!-- Empty state -->
+    <div v-else-if="diagnostics.length === 0" class="py-16 text-center">
+      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+        <Icon name="lucide:clipboard-x" class="h-7 w-7 text-muted-foreground" />
+      </div>
+      <p class="text-base font-medium text-foreground">Aucun diagnostic</p>
+      <p class="mt-1 text-sm text-muted-foreground">
+        Creez le premier diagnostic pour ce patient
+      </p>
+      <Button
+        class="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground"
+        @click="showNewDialog = true"
+      >
+        <Icon name="lucide:plus" class="mr-2 h-4 w-4" />
+        Creer le premier diagnostic
       </Button>
     </div>
 
-    <!-- List -->
+    <!-- Diagnostic cards -->
     <div v-else class="space-y-4">
       <Card
         v-for="diag in diagnostics"
         :key="diag.id"
-        class="cursor-pointer"
+        class="cursor-pointer transition-shadow hover:shadow-md"
         @click="toggleExpand(diag.id)"
       >
         <CardHeader class="pb-3">
           <div class="flex items-start justify-between">
-            <div>
+            <div class="min-w-0 flex-1">
               <CardTitle class="text-base">
                 {{ diag.titre ?? 'Diagnostic sans titre' }}
               </CardTitle>
-              <CardDescription>
+              <CardDescription class="mt-1">
                 {{ formatDate(diag.created_at) }}
-                · {{ diag.findings.length }} constat{{ diag.findings.length !== 1 ? 's' : '' }}
+                <span class="mx-1.5">|</span>
+                {{ diag.findings.length }} constat{{ diag.findings.length !== 1 ? 's' : '' }}
               </CardDescription>
             </div>
             <Icon
               :name="expanded.has(diag.id) ? 'lucide:chevron-up' : 'lucide:chevron-down'"
-              class="w-4 h-4 text-muted-foreground mt-1"
+              class="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform"
             />
           </div>
         </CardHeader>
 
-        <CardContent v-if="expanded.has(diag.id)">
-          <p v-if="diag.notes" class="text-sm text-muted-foreground mb-4">{{ diag.notes }}</p>
+        <CardContent v-if="expanded.has(diag.id)" class="border-t pt-4">
+          <p v-if="diag.notes" class="mb-4 text-sm text-muted-foreground">{{ diag.notes }}</p>
 
           <div v-if="diag.findings.length > 0" class="space-y-2">
             <div
               v-for="finding in diag.findings"
               :key="finding.id"
-              class="flex items-center gap-3 p-2 rounded-md border bg-muted/30"
+              class="flex items-center gap-3 rounded-lg border bg-muted/30 p-3"
             >
-              <Badge :variant="sourceVariant(finding.source)" class="shrink-0">
+              <Badge :variant="sourceVariant(finding.source)" class="shrink-0 text-xs">
                 {{ finding.source === 'ia' ? 'IA' : 'Praticien' }}
               </Badge>
-              <span class="font-medium text-sm">{{ finding.type }}</span>
-              <span v-if="finding.dent_fdi" class="text-xs text-muted-foreground">
+              <span class="text-sm font-medium text-foreground">{{ finding.type }}</span>
+              <Badge v-if="finding.dent_fdi" variant="secondary" class="text-xs">
                 Dent {{ finding.dent_fdi }}
-              </span>
-              <div class="flex items-center gap-1 ml-auto">
-                <span class="text-xs text-muted-foreground">Sévérité</span>
+              </Badge>
+              <div class="ml-auto flex items-center gap-1.5">
+                <span class="text-xs text-muted-foreground">Severite</span>
                 <div class="flex gap-0.5">
                   <span
                     v-for="i in 5"
                     :key="i"
-                    class="w-3 h-3 rounded-sm"
+                    class="h-2.5 w-2.5 rounded-sm"
                     :class="i <= finding.severite ? 'bg-orange-400' : 'bg-muted'"
                   />
                 </div>
@@ -86,7 +112,7 @@
             </div>
           </div>
 
-          <p v-else class="text-sm text-muted-foreground">Aucun constat renseigné.</p>
+          <p v-else class="text-sm text-muted-foreground">Aucun constat renseigne.</p>
         </CardContent>
       </Card>
     </div>
@@ -96,18 +122,29 @@
       <DialogContent class="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nouveau diagnostic</DialogTitle>
-          <DialogDescription>Créez un diagnostic avec les constats cliniques associés.</DialogDescription>
+          <DialogDescription>
+            Creez un diagnostic avec les constats cliniques associes.
+          </DialogDescription>
         </DialogHeader>
 
         <form class="space-y-4" @submit.prevent="handleCreate">
           <div class="space-y-2">
             <Label for="titre">Titre du diagnostic</Label>
-            <Input id="titre" v-model="form.titre" placeholder="Ex : Bilan initial, Contrôle annuel..." />
+            <Input
+              id="titre"
+              v-model="form.titre"
+              placeholder="Ex : Bilan initial, Controle annuel..."
+            />
           </div>
 
           <div class="space-y-2">
-            <Label for="notes">Notes générales</Label>
-            <Textarea id="notes" v-model="form.notes" placeholder="Observations cliniques globales..." :rows="2" />
+            <Label for="notes">Notes generales</Label>
+            <Textarea
+              id="notes"
+              v-model="form.notes"
+              placeholder="Observations cliniques globales..."
+              :rows="2"
+            />
           </div>
 
           <!-- Findings -->
@@ -115,7 +152,7 @@
             <div class="flex items-center justify-between">
               <Label>Constats cliniques</Label>
               <Button type="button" variant="outline" size="sm" @click="addFinding">
-                <Icon name="lucide:plus" class="w-3.5 h-3.5 mr-1" />
+                <Icon name="lucide:plus" class="mr-1 h-3.5 w-3.5" />
                 Ajouter
               </Button>
             </div>
@@ -123,25 +160,29 @@
             <div
               v-for="(finding, idx) in form.findings"
               :key="idx"
-              class="border rounded-lg p-3 space-y-3"
+              class="rounded-lg border p-3 space-y-3"
             >
               <div class="flex items-center justify-between">
-                <span class="text-sm font-medium">Constat {{ idx + 1 }}</span>
+                <span class="text-sm font-medium text-foreground">Constat {{ idx + 1 }}</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  class="h-6 w-6 p-0 text-muted-foreground"
+                  class="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
                   @click="removeFinding(idx)"
                 >
-                  <Icon name="lucide:x" class="w-3.5 h-3.5" />
+                  <Icon name="lucide:x" class="h-3.5 w-3.5" />
                 </Button>
               </div>
 
               <div class="grid grid-cols-2 gap-3">
                 <div class="space-y-1">
                   <Label class="text-xs">Type de constat *</Label>
-                  <Input v-model="finding.type" placeholder="Ex : Carie, Abcès, Parodontite..." required />
+                  <Input
+                    v-model="finding.type"
+                    placeholder="Ex : Carie, Abces, Parodontite..."
+                    required
+                  />
                 </div>
                 <div class="space-y-1">
                   <Label class="text-xs">Dent (FDI)</Label>
@@ -169,7 +210,7 @@
                   </Select>
                 </div>
                 <div class="space-y-1">
-                  <Label class="text-xs">Sévérité (1–5)</Label>
+                  <Label class="text-xs">Severite (1-5)</Label>
                   <div class="flex items-center gap-2 pt-1">
                     <input
                       v-model.number="finding.severite"
@@ -177,16 +218,16 @@
                       min="1"
                       max="5"
                       step="1"
-                      class="flex-1"
+                      class="flex-1 accent-[hsl(var(--primary))]"
                     />
-                    <span class="text-sm font-medium w-4">{{ finding.severite }}</span>
+                    <span class="w-4 text-sm font-medium">{{ finding.severite }}</span>
                   </div>
                 </div>
               </div>
 
               <div class="space-y-1">
                 <Label class="text-xs">Notes</Label>
-                <Input v-model="finding.notes" placeholder="Précisions..." />
+                <Input v-model="finding.notes" placeholder="Precisions..." />
               </div>
             </div>
           </div>
@@ -196,9 +237,15 @@
           </Alert>
 
           <DialogFooter>
-            <Button type="button" variant="outline" @click="showNewDialog = false">Annuler</Button>
-            <Button type="submit" :disabled="creating">
-              <Icon v-if="creating" name="lucide:loader-2" class="w-4 h-4 mr-2 animate-spin" />
+            <Button type="button" variant="outline" @click="showNewDialog = false">
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              :disabled="creating"
+              class="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <Icon v-if="creating" name="lucide:loader-2" class="mr-2 h-4 w-4 animate-spin" />
               Enregistrer le diagnostic
             </Button>
           </DialogFooter>
@@ -270,7 +317,6 @@ async function fetchDiagnostics(): Promise<void> {
     }
   } catch (e) {
     loadError.value = e instanceof Error ? e.message : 'Erreur lors du chargement des diagnostics'
-    console.error('Failed to load diagnostics:', e)
   } finally {
     loading.value = false
   }
@@ -300,10 +346,10 @@ async function handleCreate(): Promise<void> {
       form.notes = ''
       form.findings = []
     } else {
-      createError.value = response.error ?? 'Erreur lors de la création'
+      createError.value = response.error ?? 'Erreur lors de la creation'
     }
   } catch (err) {
-    createError.value = err instanceof Error ? err.message : 'Erreur lors de la création'
+    createError.value = err instanceof Error ? err.message : 'Erreur lors de la creation'
   } finally {
     creating.value = false
   }

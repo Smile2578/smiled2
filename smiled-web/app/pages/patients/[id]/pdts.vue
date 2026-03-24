@@ -1,10 +1,16 @@
 <template>
   <div>
-    <!-- Actions bar -->
-    <div class="flex items-center justify-between mb-6">
-      <p class="text-sm text-muted-foreground">Propositions thérapeutiques par formule</p>
-      <Button @click="showNewDialog = true">
-        <Icon name="lucide:plus" class="w-4 h-4 mr-2" />
+    <!-- Header -->
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-semibold text-foreground">Plans de traitement</h2>
+        <p class="text-sm text-muted-foreground">Propositions therapeutiques par formule</p>
+      </div>
+      <Button
+        class="bg-primary hover:bg-primary/90 text-primary-foreground"
+        @click="showNewDialog = true"
+      >
+        <Icon name="lucide:plus" class="mr-2 h-4 w-4" />
         Nouveau plan
       </Button>
     </div>
@@ -20,20 +26,26 @@
       <AlertDescription>{{ downloadError }}</AlertDescription>
     </Alert>
 
-    <!-- Errors -->
-    <Alert v-if="loadError" variant="destructive" class="mb-4">
-      <AlertDescription>{{ loadError }}</AlertDescription>
-    </Alert>
-    <Alert v-if="statusError" variant="destructive" class="mb-4">
-      <AlertDescription>{{ statusError }}</AlertDescription>
-    </Alert>
-    <Alert v-if="downloadError" variant="destructive" class="mb-4">
-      <AlertDescription>{{ downloadError }}</AlertDescription>
-    </Alert>
-
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center h-64">
-      <Icon name="lucide:loader-2" class="w-8 h-8 animate-spin text-muted-foreground" />
+    <!-- Loading skeleton -->
+    <div v-if="loading" class="space-y-4">
+      <Skeleton class="h-10 w-96 rounded-lg" />
+      <Card v-for="i in 2" :key="i">
+        <CardHeader>
+          <div class="flex items-center justify-between">
+            <div class="space-y-2">
+              <Skeleton class="h-5 w-48" />
+              <Skeleton class="h-4 w-32" />
+            </div>
+            <Skeleton class="h-6 w-20 rounded-full" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div class="space-y-2">
+            <Skeleton class="h-4 w-full" />
+            <Skeleton class="h-4 w-3/4" />
+          </div>
+        </CardContent>
+      </Card>
     </div>
 
     <template v-else>
@@ -52,25 +64,37 @@
           :value="formule"
           class="mt-4"
         >
-          <div v-if="pdtsByFormule[formule].length === 0" class="text-center py-12 text-muted-foreground">
-            <Icon name="lucide:file-plus" class="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>Aucun plan de traitement pour cette formule</p>
-            <Button class="mt-4" variant="outline" @click="openNewWithFormule(formule)">
-              Créer un plan {{ formuleLabel(formule) }}
+          <!-- Empty formule -->
+          <div v-if="pdtsByFormule[formule].length === 0" class="py-12 text-center">
+            <div
+              class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted"
+            >
+              <Icon name="lucide:file-plus" class="h-7 w-7 text-muted-foreground" />
+            </div>
+            <p class="text-base font-medium text-foreground">
+              Aucun plan pour cette formule
+            </p>
+            <Button
+              class="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground"
+              @click="openNewWithFormule(formule)"
+            >
+              Creer un plan {{ formuleLabel(formule) }}
             </Button>
           </div>
 
+          <!-- PDT cards -->
           <div v-else class="space-y-4">
-            <Card v-for="pdt in pdtsByFormule[formule]" :key="pdt.id">
+            <Card v-for="pdt in pdtsByFormule[formule]" :key="pdt.id" class="shadow-sm">
               <CardHeader>
                 <div class="flex items-start justify-between">
                   <div>
                     <CardTitle class="text-base">
                       {{ pdt.titre ?? formuleLabel(pdt.formule) }}
                     </CardTitle>
-                    <CardDescription>
-                      Créé le {{ formatDate(pdt.created_at) }}
-                      · {{ pdt.lines.length }} ligne{{ pdt.lines.length !== 1 ? 's' : '' }}
+                    <CardDescription class="mt-1">
+                      Cree le {{ formatDate(pdt.created_at) }}
+                      <span class="mx-1.5">|</span>
+                      {{ pdt.lines.length }} ligne{{ pdt.lines.length !== 1 ? 's' : '' }}
                     </CardDescription>
                   </div>
                   <div class="flex items-center gap-2">
@@ -80,12 +104,13 @@
                     <Button
                       variant="ghost"
                       size="sm"
+                      class="text-muted-foreground hover:text-foreground"
                       :disabled="downloadingId === pdt.id"
                       @click.stop="handleDownloadPdf(pdt.id)"
                     >
                       <Icon
                         :name="downloadingId === pdt.id ? 'lucide:loader-2' : 'lucide:download'"
-                        class="w-4 h-4"
+                        class="h-4 w-4"
                         :class="{ 'animate-spin': downloadingId === pdt.id }"
                       />
                     </Button>
@@ -93,48 +118,52 @@
                 </div>
               </CardHeader>
 
-              <CardContent>
+              <CardContent class="border-t pt-4">
                 <!-- Lines summary -->
-                <div v-if="pdt.lines.length > 0" class="space-y-1 mb-4">
+                <div v-if="pdt.lines.length > 0" class="mb-4 space-y-1">
                   <div
                     v-for="line in pdt.lines"
                     :key="line.id"
-                    class="flex justify-between text-sm py-1 border-b last:border-0"
+                    class="flex justify-between border-b border-border/50 py-1.5 text-sm last:border-0"
                   >
                     <div class="flex items-center gap-2">
-                      <span>{{ line.acte_libelle }}</span>
-                      <span v-if="line.dent_fdi" class="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                      <span class="text-foreground">{{ line.acte_libelle }}</span>
+                      <Badge v-if="line.dent_fdi" variant="secondary" class="text-xs">
                         {{ line.dent_fdi }}
-                      </span>
+                      </Badge>
                     </div>
-                    <span class="font-medium">{{ formatPrice(line.prix_unitaire * line.quantite) }}</span>
+                    <span class="font-medium text-foreground">
+                      {{ formatPrice(line.prix_unitaire * line.quantite) }}
+                    </span>
                   </div>
                 </div>
 
                 <!-- Total & status -->
                 <div class="flex items-center justify-between pt-2">
                   <div class="flex items-center gap-2">
-                    <Label class="text-xs">Statut :</Label>
+                    <Label class="text-xs text-muted-foreground">Statut :</Label>
                     <Select
                       :model-value="pdt.statut"
                       @update:model-value="(val) => handleStatusUpdate(pdt.id, val as PdtStatus)"
                     >
-                      <SelectTrigger class="h-7 text-xs w-40">
+                      <SelectTrigger class="h-7 w-40 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="brouillon">Brouillon</SelectItem>
-                        <SelectItem value="presente">Présenté</SelectItem>
-                        <SelectItem value="accepte">Accepté</SelectItem>
+                        <SelectItem value="presente">Presente</SelectItem>
+                        <SelectItem value="accepte">Accepte</SelectItem>
                         <SelectItem value="en_cours">En cours</SelectItem>
-                        <SelectItem value="termine">Terminé</SelectItem>
-                        <SelectItem value="refuse">Refusé</SelectItem>
+                        <SelectItem value="termine">Termine</SelectItem>
+                        <SelectItem value="refuse">Refuse</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div class="text-right">
                     <p class="text-xs text-muted-foreground">Total</p>
-                    <p class="text-lg font-bold">{{ formatPrice(pdt.prix_total) }}</p>
+                    <p class="text-lg font-bold text-foreground">
+                      {{ formatPrice(pdt.prix_total) }}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -149,7 +178,7 @@
       <DialogContent class="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nouveau plan de traitement</DialogTitle>
-          <DialogDescription>Définissez les actes et leur tarification.</DialogDescription>
+          <DialogDescription>Definissez les actes et leur tarification.</DialogDescription>
         </DialogHeader>
 
         <form class="space-y-4" @submit.prevent="handleCreate">
@@ -158,7 +187,7 @@
               <Label for="formule">Formule *</Label>
               <Select v-model="form.formule">
                 <SelectTrigger id="formule">
-                  <SelectValue placeholder="Sélectionner" />
+                  <SelectValue placeholder="Selectionner" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="lab">Lab optimal</SelectItem>
@@ -176,7 +205,12 @@
 
           <div class="space-y-2">
             <Label for="notes_pdt">Notes</Label>
-            <Textarea id="notes_pdt" v-model="form.notes" placeholder="Remarques sur ce plan..." :rows="2" />
+            <Textarea
+              id="notes_pdt"
+              v-model="form.notes"
+              placeholder="Remarques sur ce plan..."
+              :rows="2"
+            />
           </div>
 
           <PdtBuilder :lines="form.lines" @update="form.lines = $event" />
@@ -186,10 +220,16 @@
           </Alert>
 
           <DialogFooter>
-            <Button type="button" variant="outline" @click="showNewDialog = false">Annuler</Button>
-            <Button type="submit" :disabled="creating || !form.formule">
-              <Icon v-if="creating" name="lucide:loader-2" class="w-4 h-4 mr-2 animate-spin" />
-              Créer le plan
+            <Button type="button" variant="outline" @click="showNewDialog = false">
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              :disabled="creating || !form.formule"
+              class="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <Icon v-if="creating" name="lucide:loader-2" class="mr-2 h-4 w-4 animate-spin" />
+              Creer le plan
             </Button>
           </DialogFooter>
         </form>
@@ -244,23 +284,23 @@ function formuleLabel(f: PdtFormule | string): string {
 function statusLabel(s: PdtStatus): string {
   const labels: Record<PdtStatus, string> = {
     brouillon: 'Brouillon',
-    presente: 'Présenté',
-    accepte: 'Accepté',
+    presente: 'Presente',
+    accepte: 'Accepte',
     en_cours: 'En cours',
-    termine: 'Terminé',
-    refuse: 'Refusé',
+    termine: 'Termine',
+    refuse: 'Refuse',
   }
   return labels[s] ?? s
 }
 
 function statusClass(s: PdtStatus): string {
   const classes: Record<PdtStatus, string> = {
-    brouillon: 'bg-gray-100 text-gray-700',
-    presente: 'bg-blue-100 text-blue-700',
-    accepte: 'bg-green-100 text-green-700',
-    en_cours: 'bg-yellow-100 text-yellow-700',
-    termine: 'bg-emerald-100 text-emerald-700',
-    refuse: 'bg-red-100 text-red-700',
+    brouillon: 'bg-muted text-muted-foreground',
+    presente: 'bg-blue-50 text-blue-700 border-blue-200',
+    accepte: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    en_cours: 'bg-amber-50 text-amber-700 border-amber-200',
+    termine: 'bg-green-50 text-green-700 border-green-200',
+    refuse: 'bg-red-50 text-red-700 border-red-200',
   }
   return classes[s] ?? ''
 }
@@ -291,10 +331,10 @@ async function handleCreate(): Promise<void> {
       form.notes = ''
       form.lines = []
     } else {
-      createError.value = response.error ?? 'Erreur lors de la création'
+      createError.value = response.error ?? 'Erreur lors de la creation'
     }
   } catch (err) {
-    createError.value = err instanceof Error ? err.message : 'Erreur lors de la création'
+    createError.value = err instanceof Error ? err.message : 'Erreur lors de la creation'
   } finally {
     creating.value = false
   }
@@ -310,8 +350,7 @@ async function handleStatusUpdate(pdtId: string, statut: PdtStatus): Promise<voi
       pdts.value = pdts.value.map((p) => (p.id === pdtId ? response.data! : p))
     }
   } catch (e) {
-    statusError.value = e instanceof Error ? e.message : 'Erreur lors de la mise à jour du statut'
-    console.error('Failed to update PDT status:', e)
+    statusError.value = e instanceof Error ? e.message : 'Erreur lors de la mise a jour du statut'
   }
 }
 
@@ -323,8 +362,7 @@ async function handleDownloadPdf(pdtId: string): Promise<void> {
   try {
     await downloadPdf(patientId, pdtId)
   } catch (e) {
-    downloadError.value = e instanceof Error ? e.message : 'Erreur lors du téléchargement du PDF'
-    console.error('Failed to download PDF:', e)
+    downloadError.value = e instanceof Error ? e.message : 'Erreur lors du telechargement du PDF'
   } finally {
     downloadingId.value = null
   }
@@ -340,7 +378,6 @@ onMounted(async () => {
     }
   } catch (e) {
     loadError.value = e instanceof Error ? e.message : 'Erreur lors du chargement des plans'
-    console.error('Failed to load PDTs:', e)
   } finally {
     loading.value = false
   }

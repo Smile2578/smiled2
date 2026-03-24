@@ -1,4 +1,4 @@
-import type { FaceName, HitTestResult } from './types'
+import type { FaceName, HitTestResult } from './dentalChartTypes'
 import { hitTest } from './fdi-geometry'
 
 export interface ClickEvent {

@@ -17,8 +17,8 @@
 </template>
 
 <script setup lang="ts">
-import type { ToothEntry, FaceName, FaceState } from './types'
-import { TOOTH_STATUS_LABELS, FACE_STATE_LABELS } from './types'
+import type { ToothEntry, FaceName, FaceState } from './dentalChartTypes'
+import { TOOTH_STATUS_LABELS, FACE_STATE_LABELS } from './dentalChartTypes'
 import { CANVAS_WIDTH, CANVAS_HEIGHT, GEOMETRY_BY_FDI } from './fdi-geometry'
 import { renderCached } from './ToothRenderer'
 import { eventToCanvasCoords, resolveHit, getCursorStyle } from './ChartInteraction'

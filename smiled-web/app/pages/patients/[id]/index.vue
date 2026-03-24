@@ -1,91 +1,153 @@
 <template>
   <div>
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center h-64">
-      <Icon name="lucide:loader-2" class="w-8 h-8 animate-spin text-muted-foreground" />
+    <!-- Loading skeleton -->
+    <div v-if="loading" class="space-y-6">
+      <Card v-for="i in 4" :key="i">
+        <CardHeader>
+          <Skeleton class="h-5 w-32" />
+        </CardHeader>
+        <CardContent class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div v-for="j in 4" :key="j" class="space-y-2">
+            <Skeleton class="h-4 w-20" />
+            <Skeleton class="h-9 w-full" />
+          </div>
+        </CardContent>
+      </Card>
     </div>
 
     <template v-else-if="patient">
       <form class="space-y-6" @submit.prevent="handleSave">
-        <!-- Identity -->
+        <!-- Identite -->
         <Card>
-          <CardHeader>
-            <CardTitle class="text-base">Identité</CardTitle>
+          <CardHeader class="border-b bg-muted/30">
+            <div class="flex items-center gap-2">
+              <Icon name="lucide:user" class="h-4 w-4 text-primary" />
+              <CardTitle class="text-base font-semibold">Identite</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent class="grid grid-cols-2 gap-4">
+          <CardContent class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
             <div class="space-y-2">
-              <Label for="nom">Nom</Label>
-              <Input id="nom" v-model="editForm.nom" :disabled="!editing" />
-              <p v-if="fieldErrors.nom" class="text-xs text-destructive">{{ fieldErrors.nom }}</p>
+              <Label for="edit-nom">Nom</Label>
+              <Input id="edit-nom" v-model="editForm.nom" :disabled="!editing" />
+              <p v-if="fieldErrors.nom" class="text-xs text-destructive">
+                {{ fieldErrors.nom }}
+              </p>
             </div>
             <div class="space-y-2">
-              <Label for="prenom">Prénom</Label>
-              <Input id="prenom" v-model="editForm.prenom" :disabled="!editing" />
-              <p v-if="fieldErrors.prenom" class="text-xs text-destructive">{{ fieldErrors.prenom }}</p>
+              <Label for="edit-prenom">Prenom</Label>
+              <Input id="edit-prenom" v-model="editForm.prenom" :disabled="!editing" />
+              <p v-if="fieldErrors.prenom" class="text-xs text-destructive">
+                {{ fieldErrors.prenom }}
+              </p>
             </div>
             <div class="space-y-2">
-              <Label for="nom_naissance">Nom de naissance</Label>
-              <Input id="nom_naissance" v-model="editForm.nom_naissance" :disabled="!editing" placeholder="—" />
+              <Label for="edit-nom_naissance">Nom de naissance</Label>
+              <Input
+                id="edit-nom_naissance"
+                v-model="editForm.nom_naissance"
+                :disabled="!editing"
+                placeholder="--"
+              />
             </div>
             <div class="space-y-2">
-              <Label for="sexe">Sexe</Label>
+              <Label for="edit-sexe">Sexe</Label>
               <Select v-model="editForm.sexe" :disabled="!editing">
-                <SelectTrigger id="sexe">
+                <SelectTrigger id="edit-sexe">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="M">Masculin</SelectItem>
-                  <SelectItem value="F">Féminin</SelectItem>
+                  <SelectItem value="F">Feminin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div class="space-y-2">
-              <Label for="date_naissance">Date de naissance</Label>
-              <Input id="date_naissance" v-model="editForm.date_naissance" type="date" :disabled="!editing" />
-              <p v-if="fieldErrors.date_naissance" class="text-xs text-destructive">{{ fieldErrors.date_naissance }}</p>
+              <Label for="edit-date_naissance">Date de naissance</Label>
+              <Input
+                id="edit-date_naissance"
+                v-model="editForm.date_naissance"
+                type="date"
+                :disabled="!editing"
+              />
+              <p v-if="fieldErrors.date_naissance" class="text-xs text-destructive">
+                {{ fieldErrors.date_naissance }}
+              </p>
             </div>
             <div class="space-y-2">
-              <Label for="num_ss">N° Sécurité Sociale</Label>
-              <Input id="num_ss" v-model="editForm.num_ss" :disabled="!editing" placeholder="—" />
-            </div>
-            <div class="space-y-2">
-              <Label for="profession">Profession</Label>
-              <Input id="profession" v-model="editForm.profession" :disabled="!editing" placeholder="—" />
+              <Label for="edit-profession">Profession</Label>
+              <Input
+                id="edit-profession"
+                v-model="editForm.profession"
+                :disabled="!editing"
+                placeholder="--"
+              />
             </div>
           </CardContent>
         </Card>
 
         <!-- Contact -->
         <Card>
-          <CardHeader>
-            <CardTitle class="text-base">Coordonnées</CardTitle>
+          <CardHeader class="border-b bg-muted/30">
+            <div class="flex items-center gap-2">
+              <Icon name="lucide:phone" class="h-4 w-4 text-primary" />
+              <CardTitle class="text-base font-semibold">Contact</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent class="grid grid-cols-2 gap-4">
+          <CardContent class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
             <div class="space-y-2">
-              <Label for="telephone">Téléphone</Label>
-              <Input id="telephone" v-model="editForm.telephone" :disabled="!editing" placeholder="—" />
+              <Label for="edit-telephone">Telephone</Label>
+              <Input
+                id="edit-telephone"
+                v-model="editForm.telephone"
+                :disabled="!editing"
+                placeholder="--"
+              />
             </div>
             <div class="space-y-2">
-              <Label for="email">Email</Label>
-              <Input id="email" v-model="editForm.email" type="email" :disabled="!editing" placeholder="—" />
+              <Label for="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                v-model="editForm.email"
+                type="email"
+                :disabled="!editing"
+                placeholder="--"
+              />
             </div>
-            <div class="col-span-2 space-y-2">
-              <Label for="adresse">Adresse</Label>
-              <Textarea id="adresse" v-model="editForm.adresse" :disabled="!editing" rows="2" placeholder="—" />
+            <div class="col-span-full space-y-2">
+              <Label for="edit-adresse">Adresse</Label>
+              <Textarea
+                id="edit-adresse"
+                v-model="editForm.adresse"
+                :disabled="!editing"
+                rows="2"
+                placeholder="--"
+              />
             </div>
           </CardContent>
         </Card>
 
-        <!-- Coverage -->
+        <!-- Couverture -->
         <Card>
-          <CardHeader>
-            <CardTitle class="text-base">Couverture sociale</CardTitle>
+          <CardHeader class="border-b bg-muted/30">
+            <div class="flex items-center gap-2">
+              <Icon name="lucide:shield" class="h-4 w-4 text-primary" />
+              <CardTitle class="text-base font-semibold">Couverture sociale</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent class="grid grid-cols-2 gap-4">
+          <CardContent class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
             <div class="space-y-2">
-              <Label for="couverture">Type de couverture</Label>
+              <Label for="edit-num_ss">N. Securite Sociale</Label>
+              <Input
+                id="edit-num_ss"
+                v-model="editForm.num_ss"
+                :disabled="!editing"
+                placeholder="--"
+              />
+            </div>
+            <div class="space-y-2">
+              <Label for="edit-couverture">Type de couverture</Label>
               <Select v-model="editForm.couverture" :disabled="!editing">
-                <SelectTrigger id="couverture">
+                <SelectTrigger id="edit-couverture">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -97,54 +159,92 @@
               </Select>
             </div>
             <div class="space-y-2">
-              <Label for="mutuelle_nom">Nom de la mutuelle</Label>
-              <Input id="mutuelle_nom" v-model="editForm.mutuelle_nom" :disabled="!editing" placeholder="—" />
+              <Label for="edit-mutuelle_nom">Nom de la mutuelle</Label>
+              <Input
+                id="edit-mutuelle_nom"
+                v-model="editForm.mutuelle_nom"
+                :disabled="!editing"
+                placeholder="--"
+              />
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 self-end pb-1">
               <Checkbox
-                id="mutuelle_tableau_garantie"
+                id="edit-mutuelle_tableau_garantie"
                 v-model:checked="editForm.mutuelle_tableau_garantie"
                 :disabled="!editing"
               />
-              <Label for="mutuelle_tableau_garantie">Tableau de garantie reçu</Label>
+              <Label for="edit-mutuelle_tableau_garantie" class="text-sm">
+                Tableau de garantie recu
+              </Label>
             </div>
           </CardContent>
         </Card>
 
-        <!-- Emergency contact -->
+        <!-- Urgence -->
         <Card>
-          <CardHeader>
-            <CardTitle class="text-base">Contact d'urgence</CardTitle>
+          <CardHeader class="border-b bg-muted/30">
+            <div class="flex items-center gap-2">
+              <Icon name="lucide:heart-pulse" class="h-4 w-4 text-primary" />
+              <CardTitle class="text-base font-semibold">Contact d'urgence</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent class="grid grid-cols-3 gap-4">
+          <CardContent class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
             <div class="space-y-2">
-              <Label for="contact_urgence_nom">Nom</Label>
-              <Input id="contact_urgence_nom" v-model="editForm.contact_urgence_nom" :disabled="!editing" placeholder="—" />
+              <Label for="edit-contact_urgence_nom">Nom</Label>
+              <Input
+                id="edit-contact_urgence_nom"
+                v-model="editForm.contact_urgence_nom"
+                :disabled="!editing"
+                placeholder="--"
+              />
             </div>
             <div class="space-y-2">
-              <Label for="contact_urgence_tel">Téléphone</Label>
-              <Input id="contact_urgence_tel" v-model="editForm.contact_urgence_tel" :disabled="!editing" placeholder="—" />
+              <Label for="edit-contact_urgence_tel">Telephone</Label>
+              <Input
+                id="edit-contact_urgence_tel"
+                v-model="editForm.contact_urgence_tel"
+                :disabled="!editing"
+                placeholder="--"
+              />
             </div>
             <div class="space-y-2">
-              <Label for="contact_urgence_lien">Lien</Label>
-              <Input id="contact_urgence_lien" v-model="editForm.contact_urgence_lien" :disabled="!editing" placeholder="Conjoint, parent..." />
+              <Label for="edit-contact_urgence_lien">Lien</Label>
+              <Input
+                id="edit-contact_urgence_lien"
+                v-model="editForm.contact_urgence_lien"
+                :disabled="!editing"
+                placeholder="Conjoint, parent..."
+              />
             </div>
           </CardContent>
         </Card>
 
-        <!-- Médecin traitant -->
+        <!-- Medecin traitant -->
         <Card>
-          <CardHeader>
-            <CardTitle class="text-base">Médecin traitant</CardTitle>
+          <CardHeader class="border-b bg-muted/30">
+            <div class="flex items-center gap-2">
+              <Icon name="lucide:stethoscope" class="h-4 w-4 text-primary" />
+              <CardTitle class="text-base font-semibold">Medecin traitant</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent class="grid grid-cols-2 gap-4">
+          <CardContent class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
             <div class="space-y-2">
-              <Label for="medecin_traitant_nom">Nom</Label>
-              <Input id="medecin_traitant_nom" v-model="editForm.medecin_traitant_nom" :disabled="!editing" placeholder="—" />
+              <Label for="edit-medecin_traitant_nom">Nom</Label>
+              <Input
+                id="edit-medecin_traitant_nom"
+                v-model="editForm.medecin_traitant_nom"
+                :disabled="!editing"
+                placeholder="--"
+              />
             </div>
             <div class="space-y-2">
-              <Label for="medecin_traitant_tel">Téléphone</Label>
-              <Input id="medecin_traitant_tel" v-model="editForm.medecin_traitant_tel" :disabled="!editing" placeholder="—" />
+              <Label for="edit-medecin_traitant_tel">Telephone</Label>
+              <Input
+                id="edit-medecin_traitant_tel"
+                v-model="editForm.medecin_traitant_tel"
+                :disabled="!editing"
+                placeholder="--"
+              />
             </div>
           </CardContent>
         </Card>
@@ -154,9 +254,9 @@
           <AlertDescription>{{ saveError }}</AlertDescription>
         </Alert>
 
-        <div class="flex justify-end gap-3">
+        <div class="flex justify-end gap-3 pb-4">
           <Button v-if="!editing" type="button" variant="outline" @click="editing = true">
-            <Icon name="lucide:pencil" class="w-4 h-4 mr-2" />
+            <Icon name="lucide:pencil" class="mr-2 h-4 w-4" />
             Modifier
           </Button>
           <template v-else>
@@ -164,7 +264,7 @@
               Annuler
             </Button>
             <Button type="submit" :disabled="saving">
-              <Icon v-if="saving" name="lucide:loader-2" class="w-4 h-4 mr-2 animate-spin" />
+              <Icon v-if="saving" name="lucide:loader-2" class="mr-2 h-4 w-4 animate-spin" />
               Enregistrer
             </Button>
           </template>
@@ -180,10 +280,12 @@ import type { Patient } from '~/types/patient'
 
 const patientSchema = z.object({
   nom: z.string().min(1, 'Le nom est requis'),
-  prenom: z.string().min(1, 'Le prénom est requis'),
+  prenom: z.string().min(1, 'Le prenom est requis'),
   date_naissance: z.string().min(1, 'La date de naissance est requise'),
   sexe: z.enum(['M', 'F'], { required_error: 'Le sexe est requis' }),
-  couverture: z.enum(['mutuelle', 'cmu_c2s', 'ame', 'aucune'], { required_error: 'La couverture est requise' }),
+  couverture: z.enum(['mutuelle', 'cmu_c2s', 'ame', 'aucune'], {
+    required_error: 'La couverture est requise',
+  }),
 })
 
 const route = useRoute()
@@ -307,7 +409,11 @@ async function handleSave() {
 }
 
 // Sync form when the injected patient becomes available
-watch(patient, (p) => {
-  if (p) syncFormFromPatient(p)
-}, { immediate: true })
+watch(
+  patient,
+  (p) => {
+    if (p) syncFormFromPatient(p)
+  },
+  { immediate: true },
+)
 </script>

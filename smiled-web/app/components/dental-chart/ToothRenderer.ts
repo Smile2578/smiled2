@@ -1,5 +1,5 @@
-import type { ToothEntry, ToothGeometry, FaceGeometry, FaceName, FaceState, ToothStatus } from './types'
-import { TOOTH_STATUS_COLORS, FACE_STATE_COLORS } from './types'
+import type { ToothEntry, ToothGeometry, FaceGeometry, FaceName, FaceState, ToothStatus } from './dentalChartTypes'
+import { TOOTH_STATUS_COLORS, FACE_STATE_COLORS } from './dentalChartTypes'
 import { GEOMETRY_BY_FDI, ALL_TOOTH_GEOMETRIES } from './fdi-geometry'
 
 // OffscreenCanvas background layer cache

@@ -37,8 +37,8 @@
 </template>
 
 <script setup lang="ts">
-import type { ToothStatus, FaceState } from './types'
-import { TOOTH_STATUS_COLORS, FACE_STATE_COLORS, TOOTH_STATUS_LABELS, FACE_STATE_LABELS } from './types'
+import type { ToothStatus, FaceState } from './dentalChartTypes'
+import { TOOTH_STATUS_COLORS, FACE_STATE_COLORS, TOOTH_STATUS_LABELS, FACE_STATE_LABELS } from './dentalChartTypes'
 
 // Exclude 'presente' (white — default) from tooth status legend to reduce noise
 const EXCLUDED_STATUSES: ToothStatus[] = []

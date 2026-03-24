@@ -1,40 +1,72 @@
 <template>
   <div>
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center h-64">
-      <Icon name="lucide:loader-2" class="w-8 h-8 animate-spin text-muted-foreground" />
-    </div>
-
-    <template v-else>
-      <!-- Auto-save status -->
-      <div class="flex items-center justify-end gap-2 text-sm mb-4">
+    <!-- Header -->
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-semibold text-foreground">Parodontologie</h2>
+        <p class="text-sm text-muted-foreground">
+          Classification AAP/EFP 2017 et releve parodontal
+        </p>
+      </div>
+      <div class="flex items-center gap-2 text-sm">
         <template v-if="autoSaving">
-          <Icon name="lucide:loader-2" class="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+          <Icon name="lucide:loader-2" class="h-3.5 w-3.5 animate-spin text-muted-foreground" />
           <span class="text-muted-foreground">Sauvegarde...</span>
         </template>
         <template v-else-if="autoSaveError">
-          <Icon name="lucide:alert-circle" class="w-3.5 h-3.5 text-destructive" />
+          <Icon name="lucide:alert-circle" class="h-3.5 w-3.5 text-destructive" />
           <span class="text-destructive">{{ autoSaveError }}</span>
         </template>
         <template v-else-if="autoSaveLastSaved">
-          <Icon name="lucide:check-circle" class="w-3.5 h-3.5 text-green-600" />
-          <span class="text-muted-foreground">Sauvegardé à {{ formatTime(autoSaveLastSaved) }}</span>
+          <Icon name="lucide:check-circle" class="h-3.5 w-3.5 text-green-600" />
+          <span class="text-muted-foreground">
+            Sauvegarde a {{ formatTime(autoSaveLastSaved) }}
+          </span>
         </template>
       </div>
+    </div>
 
-      <!-- Paro Global Card -->
-      <Card class="mb-6">
+    <!-- Loading -->
+    <div v-if="loading" class="space-y-6">
+      <Card>
         <CardHeader>
-          <CardTitle class="text-base">Classification parodontale</CardTitle>
-          <CardDescription>AAP/EFP 2017 — Staging & Grading</CardDescription>
+          <Skeleton class="h-5 w-48" />
+          <Skeleton class="h-4 w-64" />
+        </CardHeader>
+        <CardContent class="grid grid-cols-4 gap-4">
+          <div v-for="i in 4" :key="i" class="space-y-2">
+            <Skeleton class="h-4 w-20" />
+            <Skeleton class="h-10 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <Skeleton class="h-5 w-40" />
         </CardHeader>
         <CardContent>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Skeleton class="h-64 w-full" />
+        </CardContent>
+      </Card>
+    </div>
+
+    <template v-else>
+      <!-- Paro Global Card -->
+      <Card class="mb-6 shadow-sm">
+        <CardHeader class="pb-4">
+          <div class="flex items-center gap-2">
+            <Icon name="lucide:activity" class="h-4 w-4 text-muted-foreground" />
+            <CardTitle class="text-base">Classification parodontale</CardTitle>
+          </div>
+          <CardDescription>Staging & Grading</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
             <div class="space-y-2">
               <Label for="staging">Staging</Label>
               <Select v-model="globalForm.staging">
                 <SelectTrigger id="staging">
-                  <SelectValue placeholder="Non renseigné" />
+                  <SelectValue placeholder="Non renseigne" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="I">Stade I</SelectItem>
@@ -49,11 +81,11 @@
               <Label for="grading">Grading</Label>
               <Select v-model="globalForm.grading">
                 <SelectTrigger id="grading">
-                  <SelectValue placeholder="Non renseigné" />
+                  <SelectValue placeholder="Non renseigne" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="A">Grade A (lent)</SelectItem>
-                  <SelectItem value="B">Grade B (modéré)</SelectItem>
+                  <SelectItem value="B">Grade B (modere)</SelectItem>
                   <SelectItem value="C">Grade C (rapide)</SelectItem>
                 </SelectContent>
               </Select>
@@ -91,15 +123,19 @@
             <Textarea
               id="global_notes"
               v-model="globalForm.notes"
-              placeholder="Observations générales..."
+              placeholder="Observations generales..."
               :rows="2"
             />
           </div>
 
           <div class="flex justify-end mt-4">
-            <Button :disabled="savingGlobal" @click="handleSaveGlobal">
-              <Icon v-if="savingGlobal" name="lucide:loader-2" class="w-4 h-4 mr-2 animate-spin" />
-              <Icon v-else name="lucide:save" class="w-4 h-4 mr-2" />
+            <Button
+              :disabled="savingGlobal"
+              class="bg-primary hover:bg-primary/90 text-primary-foreground"
+              @click="handleSaveGlobal"
+            >
+              <Icon v-if="savingGlobal" name="lucide:loader-2" class="mr-2 h-4 w-4 animate-spin" />
+              <Icon v-else name="lucide:save" class="mr-2 h-4 w-4" />
               Enregistrer classification
             </Button>
           </div>
@@ -107,16 +143,25 @@
       </Card>
 
       <!-- Paro Sites Grid -->
-      <Card>
+      <Card class="shadow-sm">
         <CardHeader class="flex flex-row items-center justify-between">
           <div>
-            <CardTitle class="text-base">Relevé parodontal</CardTitle>
-            <CardDescription>6 sites par dent (MB, B, DB côté vestibulaire / ML, L, DL côté lingual)</CardDescription>
+            <div class="flex items-center gap-2">
+              <Icon name="lucide:grid-3x3" class="h-4 w-4 text-muted-foreground" />
+              <CardTitle class="text-base">Releve parodontal</CardTitle>
+            </div>
+            <CardDescription>
+              6 sites par dent (MB, B, DB cote vestibulaire / ML, L, DL cote lingual)
+            </CardDescription>
           </div>
-          <Button :disabled="savingSites" @click="handleSaveSites">
-            <Icon v-if="savingSites" name="lucide:loader-2" class="w-4 h-4 mr-2 animate-spin" />
-            <Icon v-else name="lucide:save" class="w-4 h-4 mr-2" />
-            Enregistrer le relevé
+          <Button
+            :disabled="savingSites"
+            class="bg-primary hover:bg-primary/90 text-primary-foreground"
+            @click="handleSaveSites"
+          >
+            <Icon v-if="savingSites" name="lucide:loader-2" class="mr-2 h-4 w-4 animate-spin" />
+            <Icon v-else name="lucide:save" class="mr-2 h-4 w-4" />
+            Enregistrer le releve
           </Button>
         </CardHeader>
         <CardContent>
@@ -124,8 +169,8 @@
             <AlertDescription>{{ error }}</AlertDescription>
           </Alert>
           <Alert v-if="saveSuccess" class="mb-4">
-            <Icon name="lucide:check-circle" class="w-4 h-4" />
-            <AlertDescription>Relevé enregistré avec succès.</AlertDescription>
+            <Icon name="lucide:check-circle" class="h-4 w-4" />
+            <AlertDescription>Releve enregistre avec succes.</AlertDescription>
           </Alert>
 
           <ParoChart :sites="paroSites" @update="handleSitesUpdate" />

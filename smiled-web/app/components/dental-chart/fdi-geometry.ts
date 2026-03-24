@@ -1,4 +1,4 @@
-import type { ToothGeometry, FaceGeometry, FaceName } from './types'
+import type { ToothGeometry, FaceGeometry, FaceName } from './dentalChartTypes'
 
 // Canvas layout constants
 const TOOTH_WIDTH = 34

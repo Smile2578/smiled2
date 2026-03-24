@@ -1,49 +1,69 @@
 <template>
   <div>
     <!-- Version info + auto-save status -->
-    <div class="flex items-center justify-between mb-4">
-      <p v-if="questionnaire" class="text-sm text-muted-foreground">
-        Version {{ questionnaire.version }}
-        · Mis à jour le {{ formatDate(questionnaire.updated_at) }}
-      </p>
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-semibold text-foreground">Questionnaire medical</h2>
+        <p v-if="questionnaire" class="text-sm text-muted-foreground">
+          Version {{ questionnaire.version }}
+          · Mis a jour le {{ formatDate(questionnaire.updated_at) }}
+        </p>
+      </div>
       <div class="flex items-center gap-2 text-sm">
         <template v-if="autoSaving">
-          <Icon name="lucide:loader-2" class="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+          <Icon name="lucide:loader-2" class="h-3.5 w-3.5 animate-spin text-muted-foreground" />
           <span class="text-muted-foreground">Sauvegarde...</span>
         </template>
         <template v-else-if="autoSaveError">
-          <Icon name="lucide:alert-circle" class="w-3.5 h-3.5 text-destructive" />
+          <Icon name="lucide:alert-circle" class="h-3.5 w-3.5 text-destructive" />
           <span class="text-destructive">{{ autoSaveError }}</span>
         </template>
         <template v-else-if="autoSaveLastSaved">
-          <Icon name="lucide:check-circle" class="w-3.5 h-3.5 text-green-600" />
-          <span class="text-muted-foreground">Sauvegardé à {{ formatTime(autoSaveLastSaved) }}</span>
+          <Icon name="lucide:check-circle" class="h-3.5 w-3.5 text-green-600" />
+          <span class="text-muted-foreground">
+            Sauvegarde a {{ formatTime(autoSaveLastSaved) }}
+          </span>
         </template>
       </div>
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center h-64">
-      <Icon name="lucide:loader-2" class="w-8 h-8 animate-spin text-muted-foreground" />
+    <div v-if="loading" class="space-y-4">
+      <Card v-for="i in 4" :key="i">
+        <CardHeader>
+          <Skeleton class="h-5 w-40" />
+        </CardHeader>
+        <CardContent class="space-y-3">
+          <Skeleton class="h-10 w-full" />
+          <Skeleton class="h-10 w-3/4" />
+        </CardContent>
+      </Card>
     </div>
 
     <template v-else>
       <!-- Signature info -->
-      <Card class="mb-6">
-        <CardHeader>
-          <CardTitle class="text-base">Informations de signature</CardTitle>
+      <Card class="mb-6 shadow-sm">
+        <CardHeader class="pb-4">
+          <div class="flex items-center gap-2">
+            <Icon name="lucide:pen-tool" class="h-4 w-4 text-muted-foreground" />
+            <CardTitle class="text-base">Informations de signature</CardTitle>
+          </div>
         </CardHeader>
-        <CardContent class="grid grid-cols-3 gap-4">
+        <CardContent class="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div class="space-y-2">
             <Label for="date_signature">Date de signature</Label>
             <Input id="date_signature" v-model="form.date_signature" type="date" />
           </div>
           <div class="space-y-2">
             <Label for="nom_signataire">Signataire (nom)</Label>
-            <Input id="nom_signataire" v-model="form.nom_signataire" placeholder="Nom du patient ou représentant" />
+            <Input
+              id="nom_signataire"
+              v-model="form.nom_signataire"
+              placeholder="Nom du patient ou representant"
+            />
           </div>
           <div class="space-y-2">
-            <Label for="prochaine_maj">Prochaine mise à jour</Label>
+            <Label for="prochaine_maj">Prochaine mise a jour</Label>
             <Input id="prochaine_maj" v-model="form.prochaine_maj" type="date" />
           </div>
         </CardContent>
@@ -65,14 +85,18 @@
       </Alert>
 
       <Alert v-if="saveSuccess" class="mt-6">
-        <Icon name="lucide:check-circle" class="w-4 h-4" />
-        <AlertDescription>Questionnaire enregistré avec succès.</AlertDescription>
+        <Icon name="lucide:check-circle" class="h-4 w-4" />
+        <AlertDescription>Questionnaire enregistre avec succes.</AlertDescription>
       </Alert>
 
-      <div class="flex justify-end mt-6">
-        <Button :disabled="saving" @click="handleSave">
-          <Icon v-if="saving" name="lucide:loader-2" class="w-4 h-4 mr-2 animate-spin" />
-          <Icon v-else name="lucide:save" class="w-4 h-4 mr-2" />
+      <div class="flex justify-end mt-6 pb-4">
+        <Button
+          :disabled="saving"
+          class="bg-primary hover:bg-primary/90 text-primary-foreground"
+          @click="handleSave"
+        >
+          <Icon v-if="saving" name="lucide:loader-2" class="mr-2 h-4 w-4 animate-spin" />
+          <Icon v-else name="lucide:save" class="mr-2 h-4 w-4" />
           Enregistrer le questionnaire
         </Button>
       </div>
@@ -312,7 +336,6 @@ onMounted(async () => {
       questionnaire.value = response.data
       hydrateFromQuestionnaire(response.data)
     }
-    // No questionnaire yet — form stays with defaults, which is fine
   } catch {
     // First-time patient — questionnaire doesn't exist yet
   } finally {
@@ -320,7 +343,7 @@ onMounted(async () => {
   }
 })
 
-// Auto-save: watch all form data combined into a single computed
+// Auto-save
 const allFormData = computed(() => ({
   form: { ...form },
   hemo: hemoData.value,
