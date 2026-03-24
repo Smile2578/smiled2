@@ -8,7 +8,7 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    auth::middleware::AuthUser,
+    auth::{middleware::AuthUser, permissions::RequirePermission},
     error::ApiError,
     state::AppState,
     tenant::middleware::begin_tenant_transaction,
@@ -48,9 +48,7 @@ pub async fn update_cabinet_handler(
     auth_user: AuthUser,
     Json(body): Json<UpdateCabinet>,
 ) -> Result<impl IntoResponse, ApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(ApiError::Forbidden);
-    }
+    RequirePermission("settings.cabinet").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| ApiError::Validation(e.to_string()))?;
 
@@ -96,9 +94,7 @@ pub async fn invite_user_handler(
     auth_user: AuthUser,
     Json(body): Json<InviteUser>,
 ) -> Result<impl IntoResponse, ApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(ApiError::Forbidden);
-    }
+    RequirePermission("settings.users").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| ApiError::Validation(e.to_string()))?;
 
@@ -144,9 +140,7 @@ pub async fn update_user_handler(
     Path(user_id): Path<Uuid>,
     Json(body): Json<UpdateUser>,
 ) -> Result<impl IntoResponse, ApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(ApiError::Forbidden);
-    }
+    RequirePermission("settings.users").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| ApiError::Validation(e.to_string()))?;
 

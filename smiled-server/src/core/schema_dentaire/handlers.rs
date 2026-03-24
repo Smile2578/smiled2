@@ -7,7 +7,10 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    auth::middleware::AuthUser,
+    auth::{
+        middleware::AuthUser,
+        permissions::{PermissionDenied, RequirePermission},
+    },
     core::patient::types::ApiResponse,
     state::AppState,
     tenant::middleware::begin_tenant_transaction,
@@ -39,9 +42,7 @@ pub async fn create_schema_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<CreateSchemaInput>,
 ) -> Result<impl IntoResponse, SchemaApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(SchemaApiError::Forbidden);
-    }
+    RequirePermission("schema.write").check(&state, &auth_user).await?;
 
     if !["permanente", "lacteale", "mixte"].contains(&body.dentition.as_str()) {
         return Err(SchemaApiError::Validation(
@@ -198,9 +199,7 @@ pub async fn update_tooth_handler(
     Path((patient_id, fdi)): Path<(Uuid, i16)>,
     Json(body): Json<UpdateToothInput>,
 ) -> Result<impl IntoResponse, SchemaApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(SchemaApiError::Forbidden);
-    }
+    RequirePermission("schema.write").check(&state, &auth_user).await?;
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| SchemaApiError::Database(e.to_string()))?;
@@ -264,9 +263,7 @@ pub async fn update_paro_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<UpdateParoInput>,
 ) -> Result<impl IntoResponse, SchemaApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(SchemaApiError::Forbidden);
-    }
+    RequirePermission("paro.write").check(&state, &auth_user).await?;
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| SchemaApiError::Database(e.to_string()))?;
@@ -324,9 +321,7 @@ pub async fn update_occlusion_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<UpdateOcclusionInput>,
 ) -> Result<impl IntoResponse, SchemaApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(SchemaApiError::Forbidden);
-    }
+    RequirePermission("schema.write").check(&state, &auth_user).await?;
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| SchemaApiError::Database(e.to_string()))?;
@@ -385,9 +380,7 @@ pub async fn update_atm_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<UpdateAtmInput>,
 ) -> Result<impl IntoResponse, SchemaApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(SchemaApiError::Forbidden);
-    }
+    RequirePermission("schema.write").check(&state, &auth_user).await?;
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| SchemaApiError::Database(e.to_string()))?;
@@ -446,9 +439,7 @@ pub async fn update_paro_global_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<UpdateParoGlobalInput>,
 ) -> Result<impl IntoResponse, SchemaApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(SchemaApiError::Forbidden);
-    }
+    RequirePermission("paro.write").check(&state, &auth_user).await?;
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| SchemaApiError::Database(e.to_string()))?;
@@ -543,6 +534,15 @@ pub enum SchemaApiError {
     Validation(String),
     Conflict(String),
     Database(String),
+}
+
+impl From<PermissionDenied> for SchemaApiError {
+    fn from(e: PermissionDenied) -> Self {
+        match e {
+            PermissionDenied::Forbidden => Self::Forbidden,
+            PermissionDenied::Internal(msg) => Self::Database(msg),
+        }
+    }
 }
 
 impl IntoResponse for SchemaApiError {

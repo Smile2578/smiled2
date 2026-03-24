@@ -9,7 +9,12 @@ use serde_json::Value;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::{auth::middleware::AuthUser, error::ApiError, state::AppState, types::ApiResponse};
+use crate::{
+    auth::{middleware::AuthUser, permissions::RequirePermission},
+    error::ApiError,
+    state::AppState,
+    types::ApiResponse,
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -134,9 +139,7 @@ pub async fn create_motif_handler(
     auth_user: AuthUser,
     Json(body): Json<CreateMotif>,
 ) -> Result<impl IntoResponse, ApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(ApiError::Forbidden);
-    }
+    RequirePermission("settings.cabinet").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| ApiError::Validation(e.to_string()))?;
 
@@ -151,9 +154,7 @@ pub async fn update_motif_handler(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateMotif>,
 ) -> Result<impl IntoResponse, ApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(ApiError::Forbidden);
-    }
+    RequirePermission("settings.cabinet").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| ApiError::Validation(e.to_string()))?;
 
@@ -169,9 +170,7 @@ pub async fn delete_motif_handler(
     auth_user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(ApiError::Forbidden);
-    }
+    RequirePermission("settings.cabinet").check(&state, &auth_user).await?;
 
     let deleted = soft_delete_motif_query(&state.pool, id, auth_user.cabinet_id).await?;
 

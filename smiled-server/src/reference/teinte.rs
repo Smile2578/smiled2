@@ -8,7 +8,14 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::{auth::middleware::AuthUser, core::patient::types::ApiResponse, state::AppState};
+use crate::{
+    auth::{
+        middleware::AuthUser,
+        permissions::{PermissionDenied, RequirePermission},
+    },
+    core::patient::types::ApiResponse,
+    state::AppState,
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -137,9 +144,7 @@ pub async fn create_teinte_handler(
     auth_user: AuthUser,
     Json(body): Json<CreateTeinte>,
 ) -> Result<impl IntoResponse, TeinteApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(TeinteApiError::Forbidden);
-    }
+    RequirePermission("settings.cabinet").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| TeinteApiError::Validation(e.to_string()))?;
 
@@ -156,9 +161,7 @@ pub async fn update_teinte_handler(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateTeinte>,
 ) -> Result<impl IntoResponse, TeinteApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(TeinteApiError::Forbidden);
-    }
+    RequirePermission("settings.cabinet").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| TeinteApiError::Validation(e.to_string()))?;
 
@@ -178,6 +181,15 @@ pub enum TeinteApiError {
     Forbidden,
     Validation(String),
     Database(String),
+}
+
+impl From<PermissionDenied> for TeinteApiError {
+    fn from(e: PermissionDenied) -> Self {
+        match e {
+            PermissionDenied::Forbidden => Self::Forbidden,
+            PermissionDenied::Internal(msg) => Self::Database(msg),
+        }
+    }
 }
 
 impl IntoResponse for TeinteApiError {

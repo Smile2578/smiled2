@@ -8,7 +8,7 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    auth::middleware::AuthUser,
+    auth::{middleware::AuthUser, permissions::RequirePermission},
     error::ApiError,
     state::AppState,
     tenant::middleware::begin_tenant_transaction,
@@ -46,9 +46,7 @@ pub async fn create_prothese_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<CreateProtheseAmovible>,
 ) -> Result<impl IntoResponse, ApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(ApiError::Forbidden);
-    }
+    RequirePermission("patient.write_clinical").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| ApiError::Validation(e.to_string()))?;
 
@@ -87,9 +85,7 @@ pub async fn update_prothese_handler(
     Path((patient_id, pa_id)): Path<(Uuid, Uuid)>,
     Json(body): Json<UpdateProtheseAmovible>,
 ) -> Result<impl IntoResponse, ApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(ApiError::Forbidden);
-    }
+    RequirePermission("patient.write_clinical").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| ApiError::Validation(e.to_string()))?;
 
@@ -122,9 +118,7 @@ pub async fn delete_prothese_handler(
     auth_user: AuthUser,
     Path((patient_id, pa_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, ApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(ApiError::Forbidden);
-    }
+    RequirePermission("patient.write_clinical").check(&state, &auth_user).await?;
 
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id).await?;
 

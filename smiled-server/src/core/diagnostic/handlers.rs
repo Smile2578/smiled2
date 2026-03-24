@@ -7,7 +7,10 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    auth::middleware::AuthUser,
+    auth::{
+        middleware::AuthUser,
+        permissions::{PermissionDenied, RequirePermission},
+    },
     core::patient::types::ApiResponse,
     state::AppState,
     tenant::middleware::begin_tenant_transaction,
@@ -30,9 +33,7 @@ pub async fn create_diagnostic_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<CreateDiagnostic>,
 ) -> Result<impl IntoResponse, DiagnosticApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(DiagnosticApiError::Forbidden);
-    }
+    RequirePermission("diagnostic.create").check(&state, &auth_user).await?;
 
     validate_findings(&body)?;
 
@@ -148,6 +149,15 @@ pub enum DiagnosticApiError {
     Forbidden,
     Validation(String),
     Database(String),
+}
+
+impl From<PermissionDenied> for DiagnosticApiError {
+    fn from(e: PermissionDenied) -> Self {
+        match e {
+            PermissionDenied::Forbidden => Self::Forbidden,
+            PermissionDenied::Internal(msg) => Self::Database(msg),
+        }
+    }
 }
 
 impl IntoResponse for DiagnosticApiError {

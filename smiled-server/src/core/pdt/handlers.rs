@@ -9,7 +9,10 @@ use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::{
-    auth::middleware::AuthUser,
+    auth::{
+        middleware::AuthUser,
+        permissions::{PermissionDenied, RequirePermission},
+    },
     core::patient::types::ApiResponse,
     state::AppState,
     tenant::middleware::begin_tenant_transaction,
@@ -36,9 +39,7 @@ pub async fn create_pdt_handler(
     Path(patient_id): Path<Uuid>,
     Json(body): Json<CreatePdt>,
 ) -> Result<impl IntoResponse, PdtApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(PdtApiError::Forbidden);
-    }
+    RequirePermission("pdt.create").check(&state, &auth_user).await?;
 
     validate_create_input(&body)?;
 
@@ -129,9 +130,7 @@ pub async fn update_pdt_handler(
     Path((patient_id, pdt_id)): Path<(Uuid, Uuid)>,
     Json(body): Json<UpdatePdt>,
 ) -> Result<impl IntoResponse, PdtApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(PdtApiError::Forbidden);
-    }
+    RequirePermission("pdt.update").check(&state, &auth_user).await?;
 
     validate_update_input(&body)?;
 
@@ -182,9 +181,7 @@ pub async fn generate_pdf_handler(
     auth_user: AuthUser,
     Path((patient_id, pdt_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, PdtApiError> {
-    if !auth_user.can_write_clinical() {
-        return Err(PdtApiError::Forbidden);
-    }
+    RequirePermission("pdt.update").check(&state, &auth_user).await?;
 
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
@@ -298,6 +295,15 @@ pub enum PdtApiError {
     Conflict(String),
     Validation(String),
     Database(String),
+}
+
+impl From<PermissionDenied> for PdtApiError {
+    fn from(e: PermissionDenied) -> Self {
+        match e {
+            PermissionDenied::Forbidden => Self::Forbidden,
+            PermissionDenied::Internal(msg) => Self::Database(msg),
+        }
+    }
 }
 
 impl IntoResponse for PdtApiError {

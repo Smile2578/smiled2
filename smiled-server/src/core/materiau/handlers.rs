@@ -7,7 +7,13 @@ use axum::{
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::{auth::middleware::AuthUser, state::AppState};
+use crate::{
+    auth::{
+        middleware::AuthUser,
+        permissions::{PermissionDenied, RequirePermission},
+    },
+    state::AppState,
+};
 
 use super::{
     queries::{insert_materiau, list_categories, list_materiaux, update_materiau},
@@ -52,9 +58,7 @@ pub async fn create_materiau_handler(
     auth_user: AuthUser,
     Json(body): Json<CreateMateriau>,
 ) -> Result<impl IntoResponse, MateriauApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(MateriauApiError::Forbidden);
-    }
+    RequirePermission("settings.cabinet").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| MateriauApiError::Validation(e.to_string()))?;
 
@@ -74,9 +78,7 @@ pub async fn update_materiau_handler(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateMateriau>,
 ) -> Result<impl IntoResponse, MateriauApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(MateriauApiError::Forbidden);
-    }
+    RequirePermission("settings.cabinet").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| MateriauApiError::Validation(e.to_string()))?;
 
@@ -96,6 +98,15 @@ pub enum MateriauApiError {
     Forbidden,
     Validation(String),
     Database(String),
+}
+
+impl From<PermissionDenied> for MateriauApiError {
+    fn from(e: PermissionDenied) -> Self {
+        match e {
+            PermissionDenied::Forbidden => Self::Forbidden,
+            PermissionDenied::Internal(msg) => Self::Database(msg),
+        }
+    }
 }
 
 impl IntoResponse for MateriauApiError {

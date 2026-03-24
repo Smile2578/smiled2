@@ -4,6 +4,8 @@ use axum::{
     Json,
 };
 
+use crate::auth::permissions::PermissionDenied;
+
 /// Unified API error type for all handler modules.
 ///
 /// Maps each variant to the correct HTTP status code and returns
@@ -33,6 +35,15 @@ pub enum ApiError {
 
     #[error("{0}")]
     Internal(String),
+}
+
+impl From<PermissionDenied> for ApiError {
+    fn from(e: PermissionDenied) -> Self {
+        match e {
+            PermissionDenied::Forbidden => Self::Forbidden,
+            PermissionDenied::Internal(msg) => Self::Internal(msg),
+        }
+    }
 }
 
 impl IntoResponse for ApiError {

@@ -83,6 +83,9 @@ tower_governor = { version = "0.4.3", features = ["axum"] }
 tower-cookies = "0.10"
 cookie = { version = "0.18", features = ["secure", "percent-encode"] }
 
+# URL decoding (Better Auth signed cookies)
+urlencoding = "2"
+
 # Errors
 thiserror = "1"
 anyhow = "1"

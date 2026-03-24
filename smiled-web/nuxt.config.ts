@@ -13,13 +13,27 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@nuxt/icon',
     '@nuxt/fonts',
+    'shadcn-nuxt',
+    '@nuxtjs/color-mode',
   ],
 
-  // Component auto-import: resolve ui/ components by filename, not path
-  components: [
-    { path: '~/components/ui', pathPrefix: false },
-    { path: '~/components', pathPrefix: false },
-  ],
+  // Force light mode (no dark mode implemented yet)
+  colorMode: {
+    preference: 'light',
+    fallback: 'light',
+    classSuffix: '',
+    storage: 'cookie',
+    storageKey: 'smiled-color-mode',
+  },
+
+  // shadcn-vue: module handles ui/ component scanning without conflicts
+  shadcn: {
+    prefix: '',
+    componentDir: './app/components/ui',
+  },
+
+  // Prevent Nuxt default scan from conflicting with shadcn-nuxt module
+  ignore: ['app/components/ui/**'],
 
   // Tailwind CSS configuration
   tailwindcss: {
@@ -40,6 +54,17 @@ export default defineNuxtConfig({
     typeCheck: false, // Enable manually with `npm run typecheck`
   },
 
+  // Fonts — Inter with all needed weights
+  fonts: {
+    families: [
+      {
+        name: 'Inter',
+        provider: 'google',
+        weights: [400, 500, 600, 700],
+      },
+    ],
+  },
+
   // Dev tools
   devtools: { enabled: true },
 
@@ -49,6 +74,19 @@ export default defineNuxtConfig({
       hmr: {
         protocol: 'ws',
       },
+    },
+    optimizeDeps: {
+      include: [
+        'lucide-vue-next',
+        '@vueuse/core',
+        'reka-ui',
+        'class-variance-authority',
+        'clsx',
+        'tailwind-merge',
+        'vue-sonner',
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+      ],
     },
   },
 })

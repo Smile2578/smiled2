@@ -128,6 +128,29 @@ Le projet inclut des données de seed riches basées sur une recherche approfond
 
 Ne pas simplifier ces seed data — elles sont le résultat de 5 agents de deep research.
 
+## Auth
+
+- **Better Auth** gère l'authentification (pas le backend Rust)
+- Config serveur : `smiled-web/server/auth.ts` (pg pool, schema `auth`)
+- Client : `app/composables/useAuthClient.ts` (createAuthClient)
+- Store : `app/stores/auth.ts` (getSession, signIn, signOut — PAS useSession en SSR)
+- Handler Nuxt : `server/api/auth/[...all].ts`
+- Tables dans le schema `auth` de PostgreSQL (user, session, account, verification)
+- Credentials test : `simon@smiled.io` / `Smiled2026!`
+
+## Design System
+
+- **Polices** : Inter via `@nuxt/fonts` (400, 500, 600, 700)
+- **Couleurs** : Teal médical (`--primary: 173 80% 36%`), neutrals slate
+- **CSS** : `app/assets/css/tailwind.css` (tokens) + `tailwind.config.ts` (mapping)
+- **Module** : `shadcn-nuxt` gère les composants UI (pas de scan manuel)
+- **Dark mode** : `@nuxtjs/color-mode` forcé en light (pas de dark implémenté)
+- **Anti-flash** : `ignore: ['app/components/ui/**']` + index.ts barrels pour shadcn-nuxt
+
 ## Leçons Apprises
 
-_(à remplir au fil du développement)_
+- `useSession()` de Better Auth crash en SSR Nuxt (hasOwnProperty). Utiliser `getSession()` async côté client uniquement.
+- `@nuxtjs/color-mode` stocke la préférence dans localStorage/cookie. Changer `storageKey` pour invalider les anciennes valeurs.
+- shadcn-nuxt module nécessite des `index.ts` barrel exports dans chaque composant UI + `ignore: ['app/components/ui/**']` dans nuxt.config pour éviter les doublons.
+- Les fichiers `.ts` verrouillés par le dev server Nuxt sur Windows — tuer node.exe avant d'écrire.
+- `pnpm remove` casse les node_modules si le dev server tourne (EPERM). Toujours arrêter avant.

@@ -7,7 +7,13 @@ use axum::{
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::{auth::middleware::AuthUser, state::AppState};
+use crate::{
+    auth::{
+        middleware::AuthUser,
+        permissions::{PermissionDenied, RequirePermission},
+    },
+    state::AppState,
+};
 
 use super::{
     queries::{acte_exists, insert_acte, list_actes, toggle_acte, update_acte, upsert_tarif},
@@ -38,9 +44,7 @@ pub async fn create_acte_handler(
     auth_user: AuthUser,
     Json(body): Json<CreateActe>,
 ) -> Result<impl IntoResponse, ActeApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(ActeApiError::Forbidden);
-    }
+    RequirePermission("settings.cabinet").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| ActeApiError::Validation(e.to_string()))?;
 
@@ -60,9 +64,7 @@ pub async fn update_acte_handler(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdateActe>,
 ) -> Result<impl IntoResponse, ActeApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(ActeApiError::Forbidden);
-    }
+    RequirePermission("settings.cabinet").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| ActeApiError::Validation(e.to_string()))?;
 
@@ -82,9 +84,7 @@ pub async fn toggle_acte_handler(
     auth_user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ActeApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(ActeApiError::Forbidden);
-    }
+    RequirePermission("settings.cabinet").check(&state, &auth_user).await?;
     let acte = toggle_acte(&state.pool, id, auth_user.cabinet_id)
         .await
         .map_err(|e| ActeApiError::Database(e.to_string()))?
@@ -102,9 +102,7 @@ pub async fn override_tarif_handler(
     Path(id): Path<Uuid>,
     Json(body): Json<TarifOverride>,
 ) -> Result<impl IntoResponse, ActeApiError> {
-    if !auth_user.can_manage_settings() {
-        return Err(ActeApiError::Forbidden);
-    }
+    RequirePermission("settings.cabinet").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| ActeApiError::Validation(e.to_string()))?;
     let exists = acte_exists(&state.pool, id, auth_user.cabinet_id)
@@ -132,6 +130,15 @@ pub enum ActeApiError {
     Forbidden,
     Validation(String),
     Database(String),
+}
+
+impl From<PermissionDenied> for ActeApiError {
+    fn from(e: PermissionDenied) -> Self {
+        match e {
+            PermissionDenied::Forbidden => Self::Forbidden,
+            PermissionDenied::Internal(msg) => Self::Database(msg),
+        }
+    }
 }
 
 impl IntoResponse for ActeApiError {

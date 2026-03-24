@@ -8,7 +8,10 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    auth::middleware::AuthUser,
+    auth::{
+        middleware::AuthUser,
+        permissions::{PermissionDenied, RequirePermission},
+    },
     state::AppState,
     tenant::middleware::begin_tenant_transaction,
 };
@@ -64,6 +67,7 @@ pub async fn create_patient_handler(
     auth_user: AuthUser,
     Json(body): Json<CreatePatient>,
 ) -> Result<impl IntoResponse, PatientApiError> {
+    RequirePermission("patient.write_admin").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| PatientApiError::Validation(e.to_string()))?;
 
@@ -115,6 +119,7 @@ pub async fn update_patient_handler(
     Path(id): Path<Uuid>,
     Json(body): Json<UpdatePatient>,
 ) -> Result<impl IntoResponse, PatientApiError> {
+    RequirePermission("patient.write_admin").check(&state, &auth_user).await?;
     body.validate()
         .map_err(|e| PatientApiError::Validation(e.to_string()))?;
 
@@ -142,6 +147,7 @@ pub async fn delete_patient_handler(
     auth_user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, PatientApiError> {
+    RequirePermission("patient.write_admin").check(&state, &auth_user).await?;
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| PatientApiError::Database(e.to_string()))?;
@@ -211,6 +217,7 @@ pub async fn upsert_questionnaire_handler(
     Path(id): Path<Uuid>,
     Json(body): Json<QuestionnaireInput>,
 ) -> Result<impl IntoResponse, PatientApiError> {
+    RequirePermission("patient.write_clinical").check(&state, &auth_user).await?;
     let mut tx = begin_tenant_transaction(&state.pool, auth_user.cabinet_id)
         .await
         .map_err(|e| PatientApiError::Database(e.to_string()))?;
@@ -240,8 +247,18 @@ pub async fn upsert_questionnaire_handler(
 #[derive(Debug)]
 pub enum PatientApiError {
     NotFound,
+    Forbidden,
     Validation(String),
     Database(String),
+}
+
+impl From<PermissionDenied> for PatientApiError {
+    fn from(e: PermissionDenied) -> Self {
+        match e {
+            PermissionDenied::Forbidden => Self::Forbidden,
+            PermissionDenied::Internal(msg) => Self::Database(msg),
+        }
+    }
 }
 
 impl IntoResponse for PatientApiError {
@@ -249,6 +266,9 @@ impl IntoResponse for PatientApiError {
         let (status, message) = match self {
             PatientApiError::NotFound => {
                 (StatusCode::NOT_FOUND, "Patient introuvable".to_string())
+            }
+            PatientApiError::Forbidden => {
+                (StatusCode::FORBIDDEN, "Action non autorisée".to_string())
             }
             PatientApiError::Validation(msg) => (StatusCode::UNPROCESSABLE_ENTITY, msg),
             PatientApiError::Database(e) => {

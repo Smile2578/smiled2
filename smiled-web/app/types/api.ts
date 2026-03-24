@@ -16,6 +16,7 @@ export interface User {
   nom: string
   prenom: string
   email: string
+  name: string
 }
 
 export interface LoginResponse {

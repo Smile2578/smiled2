@@ -48,11 +48,34 @@ impl FromRequestParts<AppState> for AuthUser {
 }
 
 /// Extract the Better Auth session token from a cookie header string.
+///
+/// Better Auth signs cookies as `{token}.{base64_signature}` (URL-encoded).
+/// The DB stores only the raw token, so we must:
+/// 1. URL-decode the cookie value
+/// 2. Split on the last `.` to separate token from signature
+/// 3. Return only the token part for DB lookup
 pub fn extract_session_token(cookie_header: &str) -> Option<String> {
-    cookie_header
+    let raw = cookie_header
         .split(';')
         .find_map(|c| c.trim().strip_prefix("better-auth.session_token="))
-        .map(|v| v.to_string())
+        .map(|v| v.to_string())?;
+
+    // URL-decode the cookie value (`.` and `=` may be percent-encoded)
+    let decoded = urlencoding::decode(&raw).ok()?.into_owned();
+
+    // Better Auth signs cookies: {token}.{base64_signature_44chars}
+    // Split on last '.' to separate token from signature
+    if let Some(dot_pos) = decoded.rfind('.') {
+        let token = &decoded[..dot_pos];
+        let sig = &decoded[dot_pos + 1..];
+        // Base64 of 32-byte HMAC-SHA256 is ~44 chars
+        if sig.len() >= 40 {
+            return Some(token.to_string());
+        }
+    }
+
+    // Fallback: return decoded value as-is (unsigned cookie)
+    Some(decoded)
 }
 
 /// Rejection type returned when session extraction fails.

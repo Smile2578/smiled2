@@ -2,93 +2,136 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Smiled.IO Design System
+ *
+ * Brand: Medical/dental software — clean, trustworthy, professional
+ * Primary: Teal (#0D9488 family) — medical authority, calm
+ * Neutrals: Slate — professional, readable
+ * Typography: Inter — clean geometric sans, excellent for data-heavy UI
+ */
+
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 222 47% 11%;
+    /* ─── Surfaces ─── */
+    --background: 0 0% 100%;
+    --foreground: 220 14% 10%;
+
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 220 14% 10%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 175 89% 32%;
+    --popover-foreground: 220 14% 10%;
+
+    /* ─── Brand ─── */
+    --primary: 173 80% 36%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 175 89% 32%;
-    --radius: 0.5rem;
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 96%;
-    --sidebar-primary: 175 89% 32%;
+    /* ─── Secondary / Muted / Accent ─── */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 14% 10%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 14% 10%;
+
+    /* ─── Destructive ─── */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* ─── Borders & Inputs ─── */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 173 80% 36%;
+
+    /* ─── Radius ─── */
+    --radius: 0.625rem;
+
+    /* ─── Sidebar (dark) ─── */
+    --sidebar-background: 220 20% 10%;
+    --sidebar-foreground: 220 14% 90%;
+    --sidebar-primary: 173 80% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 175 89% 32%;
+    --sidebar-accent: 220 18% 16%;
+    --sidebar-accent-foreground: 220 14% 90%;
+    --sidebar-border: 220 18% 16%;
+    --sidebar-ring: 173 80% 40%;
 
-    --chart-1: 175 89% 32%;
-    --chart-2: 173 80% 40%;
-    --chart-3: 167 85% 78%;
+    /* ─── Charts ─── */
+    --chart-1: 173 80% 36%;
+    --chart-2: 199 89% 48%;
+    --chart-3: 258 90% 66%;
     --chart-4: 45 93% 47%;
-    --chart-5: 160 84% 39%;
+    --chart-5: 142 71% 45%;
 
-    --success: 160 84% 39%;
+    /* ─── Semantic ─── */
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 217 91% 60%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
   }
 
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 6%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 6%;
-    --popover-foreground: 210 40% 98%;
+    /* ─── Surfaces ─── */
+    --background: 220 20% 7%;
+    --foreground: 220 14% 95%;
+
+    --card: 220 20% 10%;
+    --card-foreground: 220 14% 95%;
+
+    --popover: 220 20% 10%;
+    --popover-foreground: 220 14% 95%;
+
+    /* ─── Brand ─── */
     --primary: 173 80% 40%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --primary-foreground: 220 20% 7%;
+
+    /* ─── Secondary / Muted / Accent ─── */
+    --secondary: 220 18% 16%;
+    --secondary-foreground: 220 14% 95%;
+
+    --muted: 220 18% 16%;
+    --muted-foreground: 220 9% 64%;
+
+    --accent: 220 18% 16%;
+    --accent-foreground: 220 14% 95%;
+
+    /* ─── Destructive ─── */
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 175 89% 32%;
+    --destructive-foreground: 220 14% 95%;
 
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 210 40% 96%;
-    --sidebar-primary: 175 89% 32%;
+    /* ─── Borders & Inputs ─── */
+    --border: 220 18% 16%;
+    --input: 220 18% 16%;
+    --ring: 173 80% 40%;
+
+    /* ─── Sidebar (dark) ─── */
+    --sidebar-background: 220 20% 5%;
+    --sidebar-foreground: 220 14% 90%;
+    --sidebar-primary: 173 80% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 12%;
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 217 33% 12%;
-    --sidebar-ring: 175 89% 32%;
+    --sidebar-accent: 220 18% 12%;
+    --sidebar-accent-foreground: 220 14% 90%;
+    --sidebar-border: 220 18% 12%;
+    --sidebar-ring: 173 80% 40%;
 
-    --chart-1: 175 89% 32%;
-    --chart-2: 173 80% 40%;
-    --chart-3: 167 85% 78%;
+    /* ─── Charts ─── */
+    --chart-1: 173 80% 40%;
+    --chart-2: 199 89% 48%;
+    --chart-3: 258 90% 66%;
     --chart-4: 45 93% 47%;
-    --chart-5: 160 84% 39%;
+    --chart-5: 142 71% 45%;
 
-    --success: 160 84% 39%;
+    /* ─── Semantic ─── */
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 217 91% 60%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
   }
 }
@@ -97,8 +140,64 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1, "tnum" 1;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1, "tnum" 1, "ss01" 1;
+  }
+
+  /* ─── Typography hierarchy ─── */
+  h1 {
+    @apply text-2xl font-semibold tracking-tight text-foreground;
+  }
+
+  h2 {
+    @apply text-xl font-semibold tracking-tight text-foreground;
+  }
+
+  h3 {
+    @apply text-lg font-medium text-foreground;
+  }
+
+  h4 {
+    @apply text-base font-medium text-foreground;
+  }
+
+  /* Labels and small text */
+  label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  /* Better focus rings */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Tabular numbers in tables and data */
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  /* ─── Text utilities for the design system ─── */
+  .text-heading {
+    @apply text-foreground font-semibold tracking-tight;
+  }
+
+  .text-body {
+    @apply text-foreground leading-relaxed;
+  }
+
+  .text-caption {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .text-label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .text-price {
+    @apply font-medium tabular-nums;
   }
 }

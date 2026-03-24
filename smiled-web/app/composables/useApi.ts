@@ -2,42 +2,12 @@ import type { ApiResponse } from '~/types/api'
 
 export function useApi() {
   const config = useRuntimeConfig()
-  const auth = useAuthStore()
 
   async function apiFetch<T>(url: string, options?: Parameters<typeof $fetch>[1]): Promise<T> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(options?.headers as Record<string, string> | undefined),
-    }
-
-    if (auth.accessToken) {
-      headers['Authorization'] = `Bearer ${auth.accessToken}`
-    }
-
-    try {
-      return await $fetch<T>(`${config.public.apiBase}${url}`, {
-        ...options,
-        headers,
-      })
-    } catch (error: unknown) {
-      const fetchError = error as { statusCode?: number }
-
-      if (fetchError.statusCode === 401 && auth.refreshToken) {
-        await auth.refresh()
-
-        const retryHeaders: Record<string, string> = {
-          ...headers,
-          Authorization: `Bearer ${auth.accessToken}`,
-        }
-
-        return await $fetch<T>(`${config.public.apiBase}${url}`, {
-          ...options,
-          headers: retryHeaders,
-        })
-      }
-
-      throw error
-    }
+    return await $fetch<T>(`${config.public.apiBase}${url}`, {
+      ...options,
+      credentials: 'include',
+    })
   }
 
   async function apiGet<T>(url: string, query?: Record<string, unknown>): Promise<ApiResponse<T>> {

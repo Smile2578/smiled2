@@ -1,15 +1,24 @@
-const PUBLIC_PAGES = ['/login', '/forgot-password', '/reset-password']
+const PUBLIC_PATHS = ['/', '/login', '/forgot-password', '/reset-password']
 
-export default defineNuxtRouteMiddleware((to) => {
-  // Auth check only runs client-side (tokens are in localStorage)
-  if (!import.meta.client) return
+export default defineNuxtRouteMiddleware(async (to) => {
+  if (PUBLIC_PATHS.includes(to.path)) return
 
-  const auth = useAuthStore()
-  auth.hydrate()
+  // On client side, fetch session then check
+  if (import.meta.client) {
+    const authStore = useAuthStore()
+    if (!authStore.isAuthenticated) {
+      await authStore.fetchSession()
+    }
+    if (!authStore.isAuthenticated) {
+      return navigateTo('/login')
+    }
+  }
 
-  if (PUBLIC_PAGES.includes(to.path)) return
-
-  if (!auth.isAuthenticated) {
-    return navigateTo('/login')
+  // On server side, check cookie existence as a quick gate
+  if (import.meta.server) {
+    const cookie = useCookie('better-auth.session_token')
+    if (!cookie.value) {
+      return navigateTo('/login')
+    }
   }
 })
